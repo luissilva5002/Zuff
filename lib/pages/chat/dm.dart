@@ -22,7 +22,7 @@ class DMPage extends StatelessWidget {
         stream: getConversations(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
           print(snapshot.data?.size);
           print(currentUserId);
@@ -33,7 +33,8 @@ class DMPage extends StatelessWidget {
             itemCount: conversations.length,
             itemBuilder: (context, index) {
               var conversation = conversations[index];
-              var otherUserId = (conversation['participants'] as List<String>)
+              var otherUserId = (conversation['participants'] as List<dynamic>)
+                  .cast<String>()
                   .firstWhere((id) => id != currentUserId);
 
               return ListTile(
