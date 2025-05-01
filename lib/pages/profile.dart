@@ -1,195 +1,123 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'edit_profile.dart';
 
-class Profile extends StatefulWidget {
-  const Profile({super.key});
+//para teste -> usar firestore para dar load depois
+final List<String> userPhotos = [
+  'https://via.placeholder.com/150',
+  'https://via.placeholder.com/160',
+  'https://via.placeholder.com/170',
+  'https://via.placeholder.com/180',
+  'https://via.placeholder.com/190',
+  'https://via.placeholder.com/200',
+];
 
-  @override
-  State<Profile> createState() => _ProfileState();
-}
-
-class _ProfileState extends State<Profile> {
-  String imageUrl = 'https://cdn.iconscout.com/icon/free/png-256/free-flutter-2038877-1720090.png?f=webp';
-  String name = 'User123';
-  String email = 'jonh.doe@gmail.com';
-  String creationDate = '${DateTime.now()}';
-
-  User? currentUser;
-
-  Future<void> _loadUserInfo() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    currentUser = FirebaseAuth.instance.currentUser;
-
-    if (currentUser != null) {
-      String? savedName = prefs.getString('name');
-      String? savedEmail = prefs.getString('email');
-      String? savedCreationDate = prefs.getString('creationDate');
-
-      if (savedName != null && savedEmail != null && savedCreationDate != null) {
-        setState(() {
-          name = savedName;
-          email = savedEmail;
-          creationDate = savedCreationDate;
-        });
-      } else {
-        DocumentSnapshot userInfo = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser!.uid)
-            .get();
-
-        if (userInfo.exists) {
-          setState(() {
-            name = userInfo['display_name'] ?? 'User123';
-            email = userInfo['email'] ?? 'jonh.doe@gmail.com';
-            creationDate = userInfo['created_time'] ?? '${DateTime.now()}';
-          });
-
-          await prefs.setString('name', name);
-          await prefs.setString('email', email);
-          await prefs.setString('creationDate', creationDate);
-        }
-      }
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserInfo();
-  }
+class ProfileWidget extends StatelessWidget {
+  const ProfileWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF011526),
-        automaticallyImplyLeading: false,
-        title: const Text('Profile', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          'Meu Perfil',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
+            icon: const Icon(Icons.edit, color: Colors.blue),
+            tooltip: 'Editar Perfil',
             onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => const surelogout(),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const EditProfileWidget()),
               );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.red),
+            tooltip: 'Sair',
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              Navigator.of(context).pushReplacementNamed('/login');
             },
           ),
         ],
       ),
-      /*
-      body:
-      SafeArea(
-        child: Container(
-          height: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFF011526),
-                Color(0xFF012E40),
-                Color(0xFF025959),
-                Color(0xFF02735E),
-                Color(0xFF038C65),
-              ],
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            Center(child: _buildAvatar(user)),
+            const SizedBox(height: 16),
+            Text(
+              user?.displayName ?? 'Nome não disponível',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-          ),
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  buildProfileAvatar(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(name, style: const TextStyle(fontSize: 25)),
-                    ],
-                  ),
-                  const Divider(color: Colors.transparent),
-                  const Divider(color: Colors.transparent),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 30),
-                      const Text(
-                        'ACCOUNT INFO',
-                        textAlign: TextAlign.left,
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 14),
-                      const Divider(),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Email:', textAlign: TextAlign.left),
-                          Text(email, textAlign: TextAlign.right),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Created', textAlign: TextAlign.left),
-                          Text(creationDate, textAlign: TextAlign.right),
-                        ],
-                      ),
-                      const Divider(),
-                      const SizedBox(height: 30),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 16.0, bottom: 16.0),
-                            child: Column(
-                              children: [
-                                InkWell(
-                                  onTap: () {},
-                                  child: Text(
-                                    'Help & Support',
-                                    style: TextStyle(color: Theme.of(context).colorScheme.primary, decoration: null),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
+            const SizedBox(height: 8),
+            Text(
+              user?.email ?? 'Email não disponível',
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Bio curta ou status aqui...',
+              style: TextStyle(fontSize: 14, color: Colors.black54),
+            ),
+            const SizedBox(height: 40),
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Minhas Fotos',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                height: 300,
+                child: GridView.count(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: userPhotos.map((url) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        url,
+                        fit: BoxFit.cover,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-
-       */
     );
   }
 
-  Center buildProfileAvatar() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: CircleAvatar(
-          radius: 60,
-          backgroundColor: Theme.of(context).colorScheme.secondary,
-          child: Icon(
-            Icons.person, // User icon
-            size: 100,
-            color: Theme.of(context).colorScheme.surface, // Icon color
-          ),
-        ),
-      ),
-    );
-  }
+  Widget _buildAvatar(User? user) {
+    return CircleAvatar(
+      radius: 60,
+      backgroundImage: user?.photoURL != null
+          ? NetworkImage(user!.photoURL!)
+          : const AssetImage('assets/default_profile.png') as ImageProvider,
+      backgroundColor: Colors.grey.shade200,
 }
 
 class surelogout extends StatefulWidget {
