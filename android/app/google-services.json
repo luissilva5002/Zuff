@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "610203390909",
-    "project_id": "zuff-b139f",
-    "storage_bucket": "zuff-b139f.firebasestorage.app"
+    "project_number": "329992550325",
+    "project_id": "zuff-1a15e",
+    "storage_bucket": "zuff-1a15e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:610203390909:android:38fc753546908fd101f8d4",
+        "mobilesdk_app_id": "1:329992550325:android:c9789f6eaf98dd59ebcbfc",
         "android_client_info": {
           "package_name": "com.example.zuff"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBtXbxaCy7N36iUYceT3uNhA3IN5SmY8AY"
+          "current_key": "AIzaSyBEO0XlDZsXZers0Scrxgg0XKhISlR1RmM"
         }
       ],
       "services": {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zuff/pages/dashboard.dart';
+import 'package:zuff/pages/dashboard/dashboard.dart';
 
 class Home extends StatefulWidget {
   final int? selectedIndex;

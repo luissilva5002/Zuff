@@ -41,48 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAGBYoIY2dAit3QTHe8FtMHHdXIr_HmRG0',
-    appId: '1:610203390909:web:13f13e218b7bb89601f8d4',
-    messagingSenderId: '610203390909',
-    projectId: 'zuff-b139f',
-    authDomain: 'zuff-b139f.firebaseapp.com',
-    storageBucket: 'zuff-b139f.firebasestorage.app',
-    measurementId: 'G-NBLHXDEQBY',
+    apiKey: 'AIzaSyCKpbNgErWUPVzIkH7HezFaJT7dRLYAHTg',
+    appId: '1:329992550325:web:e0aa91cad82614bcebcbfc',
+    messagingSenderId: '329992550325',
+    projectId: 'zuff-1a15e',
+    authDomain: 'zuff-1a15e.firebaseapp.com',
+    storageBucket: 'zuff-1a15e.firebasestorage.app',
+    measurementId: 'G-7SGB6TLG79',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBtXbxaCy7N36iUYceT3uNhA3IN5SmY8AY',
-    appId: '1:610203390909:android:38fc753546908fd101f8d4',
-    messagingSenderId: '610203390909',
-    projectId: 'zuff-b139f',
-    storageBucket: 'zuff-b139f.firebasestorage.app',
+    apiKey: 'AIzaSyBEO0XlDZsXZers0Scrxgg0XKhISlR1RmM',
+    appId: '1:329992550325:android:c9789f6eaf98dd59ebcbfc',
+    messagingSenderId: '329992550325',
+    projectId: 'zuff-1a15e',
+    storageBucket: 'zuff-1a15e.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCnh4oXzKRIruGqj0sdohOgCl3lllkpMOE',
-    appId: '1:610203390909:ios:f53c083f6ceb51e101f8d4',
-    messagingSenderId: '610203390909',
-    projectId: 'zuff-b139f',
-    storageBucket: 'zuff-b139f.firebasestorage.app',
+    apiKey: 'AIzaSyDsswmK-xMea0L3qWYSVHtAcGmvai5dkes',
+    appId: '1:329992550325:ios:de03754a9b7c41cdebcbfc',
+    messagingSenderId: '329992550325',
+    projectId: 'zuff-1a15e',
+    storageBucket: 'zuff-1a15e.firebasestorage.app',
     iosBundleId: 'com.example.zuff',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCnh4oXzKRIruGqj0sdohOgCl3lllkpMOE',
-    appId: '1:610203390909:ios:f53c083f6ceb51e101f8d4',
-    messagingSenderId: '610203390909',
-    projectId: 'zuff-b139f',
-    storageBucket: 'zuff-b139f.firebasestorage.app',
+    apiKey: 'AIzaSyDsswmK-xMea0L3qWYSVHtAcGmvai5dkes',
+    appId: '1:329992550325:ios:de03754a9b7c41cdebcbfc',
+    messagingSenderId: '329992550325',
+    projectId: 'zuff-1a15e',
+    storageBucket: 'zuff-1a15e.firebasestorage.app',
     iosBundleId: 'com.example.zuff',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyAGBYoIY2dAit3QTHe8FtMHHdXIr_HmRG0',
-    appId: '1:610203390909:web:ba5051d28fd2294801f8d4',
-    messagingSenderId: '610203390909',
-    projectId: 'zuff-b139f',
-    authDomain: 'zuff-b139f.firebaseapp.com',
-    storageBucket: 'zuff-b139f.firebasestorage.app',
-    measurementId: 'G-Y9WF5JQQ1C',
+    apiKey: 'AIzaSyCKpbNgErWUPVzIkH7HezFaJT7dRLYAHTg',
+    appId: '1:329992550325:web:5a92697845f480feebcbfc',
+    messagingSenderId: '329992550325',
+    projectId: 'zuff-1a15e',
+    authDomain: 'zuff-1a15e.firebaseapp.com',
+    storageBucket: 'zuff-1a15e.firebasestorage.app',
+    measurementId: 'G-8NQCHV97VV',
   );
+
 }
