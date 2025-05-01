@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:zuff/pages/dashboard.dart';
+import 'package:zuff/pages/profile.dart';
+
 
 class Home extends StatefulWidget {
   final int? selectedIndex;
@@ -32,8 +34,8 @@ class _HomeState extends State<Home> {
       /*
       Chat(),
       Events(),
-      Profile()
        */
+      ProfileWidget(),
     ];
 
     return Scaffold(
@@ -47,14 +49,14 @@ class _HomeState extends State<Home> {
             icon: Icon(Icons.favorite),
             label: 'Dashboard',
           ),
-          BottomNavigationBarItem(
+          /*BottomNavigationBarItem(
             icon: Icon(Icons.chat),
             label: 'Chat',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.event),
             label: 'Events',
-          ),
+          ),*/
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',
