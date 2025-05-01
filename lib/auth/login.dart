@@ -90,11 +90,11 @@ class _LoginPageState extends State<LoginPage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF011526), // Dark blue
-              Color(0xFF012E40), // Teal blue
-              Color(0xFF025959), // Greenish blue
-              Color(0xFF02735E),
-              Color(0xFF038C65)// Vibrant green
+              Color(0xFF30402C), // Dark blue
+              Color(0xFF405934), // Teal blue
+              Color(0xFF738C3E), // Greenish blue
+              Color(0xFFACBF65),
+              Color(0xFFBFAE99)// Vibrant green
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,

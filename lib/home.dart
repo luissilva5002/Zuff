@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:zuff/pages/dashboard.dart';
 
 class Home extends StatefulWidget {
   final int? selectedIndex;
@@ -26,25 +27,32 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> pages = [
-
+    final List<Widget> _pages = [
+      Dashboard(),
+      /*
+      Chat(),
+      Events(),
+      Profile()
+       */
     ];
 
     return Scaffold(
-      appBar: null,
-      body: pages[_selectedIndex],
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: Colors.teal,
+        items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+            icon: Icon(Icons.favorite),
+            label: 'Dashboard',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart),
-            label: 'Leaderboard',
+            icon: Icon(Icons.chat),
+            label: 'Chat',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.clean_hands),
+            icon: Icon(Icons.event),
             label: 'Events',
           ),
           BottomNavigationBarItem(
@@ -52,13 +60,8 @@ class _HomeState extends State<Home> {
             label: 'Profile',
           ),
         ],
-        currentIndex: _selectedIndex,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF038C65),
         unselectedItemColor: Colors.grey,
-        selectedLabelStyle: const TextStyle(fontSize: 13),
-        unselectedLabelStyle: const TextStyle(fontSize: 13),
-        onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
       ),
     );
   }
