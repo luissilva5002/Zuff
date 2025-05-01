@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:zuff/pages/dashboard.dart';
+import 'package:zuff/pages/chat/dm.dart';
+import 'package:zuff/pages/dashboard/dashboard.dart';
 import 'package:zuff/pages/profile.dart';
 
 
@@ -31,8 +32,8 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     final List<Widget> _pages = [
       Dashboard(),
+      DMPage(),
       /*
-      Chat(),
       Events(),
        */
       ProfileWidget(),
@@ -49,10 +50,11 @@ class _HomeState extends State<Home> {
             icon: Icon(Icons.favorite),
             label: 'Dashboard',
           ),
-          /*BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: Icon(Icons.chat),
             label: 'Chat',
           ),
+          /*
           BottomNavigationBarItem(
             icon: Icon(Icons.event),
             label: 'Events',
