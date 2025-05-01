@@ -1,18 +1,4 @@
 # zuff
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-
-# zuff
+Zuff is a project aimed at raising awareness about the importance of animal adoption. In response to the recurring issue of overcrowded kennels and other animal shelters, we developed an application that connects associations with people interested in adopting, promoting responsible adoption and helping to reduce animal purchases.
+Our app, developed in Flutter with a Firebase database, works as a matching system between potential adopters and a partner association. Users can browse through available animals and indicate those they are interested in. The association can then review the applicants’ profiles — based on their information and interactions via chat — to ensure the best match between adopter and animal.
