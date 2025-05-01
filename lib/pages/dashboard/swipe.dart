@@ -5,9 +5,16 @@ class Pet {
   final String name;
   final String location;
   final int age;
+  final String imageUrl;
 
-  Pet({required this.name, required this.location, required this.age});
+  Pet({
+    required this.name,
+    required this.location,
+    required this.age,
+    required this.imageUrl,
+  });
 }
+
 
 class PetSwipe extends StatefulWidget {
   @override
@@ -17,10 +24,28 @@ class PetSwipe extends StatefulWidget {
 class _PetSwipeState extends State<PetSwipe> {
   int currentPetIndex = 0;
 
+  //https://firebasestorage.googleapis.com/v0/b/<bucket-name>/o/<file-path>?alt=media&token=<access-token>
+
   final List<Pet> _pets = [
-    Pet(name: "Luna", location: "Lisbon", age: 2),
-    Pet(name: "Buddy", location: "Porto", age: 4),
-    Pet(name: "Max", location: "Coimbra", age: 3),
+    Pet(
+      name: "Luna",
+      location: "Lisbon",
+      age: 2,
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/zuff-b139f.appspot.com/o/luna.jpeg?alt=media&token=d6188725-1d50-4529-8002-91db0850b43a"
+
+    ),
+    Pet(
+      name: "Buddy",
+      location: "Porto",
+      age: 4,
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/zuff-b139f.appspot.com/o/buddy.jpeg?alt=media&token=d6188725-1d50-4529-8002-91db0850b43a",
+    ),
+    Pet(
+      name: "Max",
+      location: "Coimbra",
+      age: 3,
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/zuff-b139f.appspot.com/o/max.jpeg?alt=media&token=d6188725-1d50-4529-8002-91db0850b43a",
+    ),
   ];
 
   void accept(Pet pet) {
@@ -56,16 +81,14 @@ class _PetSwipeState extends State<PetSwipe> {
         });
       },
       background: Container(
-        color: Colors.green,
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: const Icon(Icons.check, color: Colors.white, size: 40),
+        child: const Icon(Icons.check, color: Colors.green, size: 40),
       ),
       secondaryBackground: Container(
-        color: Colors.red,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: const Icon(Icons.close, color: Colors.white, size: 40),
+        child: const Icon(Icons.close, color: Colors.red, size: 40),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -73,19 +96,36 @@ class _PetSwipeState extends State<PetSwipe> {
           child: Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             elevation: 8,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(pet.name, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    Text('${pet.age} years old · ${pet.location}',
-                        style: TextStyle(fontSize: 18, color: Colors.grey[700])),
-                  ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.network(
+                    pet.imageUrl,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return SizedBox(
+                        height: 200,
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return SizedBox(
+                        height: 200,
+                        child: Center(child: Icon(Icons.error)),
+                      );
+                    },
+                  ),
                 ),
-              ),
+                const SizedBox(height: 12),
+                Text(pet.name, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text('${pet.age} years old · ${pet.location}', style: TextStyle(fontSize: 18, color: Colors.grey[700])),
+              ],
             ),
           ),
         ),

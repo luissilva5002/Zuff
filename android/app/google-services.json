@@ -1,26 +1,43 @@
 {
   "project_info": {
-    "project_number": "329992550325",
-    "project_id": "zuff-1a15e",
-    "storage_bucket": "zuff-1a15e.firebasestorage.app"
+    "project_number": "610203390909",
+    "project_id": "zuff-b139f",
+    "storage_bucket": "zuff-b139f.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:329992550325:android:c9789f6eaf98dd59ebcbfc",
+        "mobilesdk_app_id": "1:610203390909:android:38fc753546908fd101f8d4",
         "android_client_info": {
           "package_name": "com.example.zuff"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "610203390909-sju40ukbmu6toouotae4mo51knop50d7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyBEO0XlDZsXZers0Scrxgg0XKhISlR1RmM"
+          "current_key": "AIzaSyBtXbxaCy7N36iUYceT3uNhA3IN5SmY8AY"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "610203390909-sju40ukbmu6toouotae4mo51knop50d7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "610203390909-u2j14u62vmhi22rpgau5m36km7d5vq2b.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.zuff"
+              }
+            }
+          ]
         }
       }
     }
