@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:zuff/pages/chat/dm.dart';
 import 'package:zuff/pages/dashboard/dashboard.dart';
-import 'package:zuff/pages/profile.dart';
-import 'package:zuff/pages/profile.dart';
+import 'package:zuff/pages/events/events.dart';
+import 'package:zuff/pages/profile/profile.dart';
 
 
 class Home extends StatefulWidget {
@@ -34,11 +34,7 @@ class _HomeState extends State<Home> {
     final List<Widget> _pages = [
       Dashboard(),
       DMPage(),
-      /*
-      Chat(),
-      Events(),
-      Profile()
-       */
+      EventsPage(),
       ProfileWidget(),
     ];
 

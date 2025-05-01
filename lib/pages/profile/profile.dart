@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'edit_profile.dart';
 
-//para teste -> usar firestore para dar load depois
 final List<String> userPhotos = [
   'https://via.placeholder.com/150',
   'https://via.placeholder.com/160',
@@ -44,9 +43,11 @@ class ProfileWidget extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.red),
             tooltip: 'Sair',
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              Navigator.of(context).pushReplacementNamed('/login');
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => const surelogout(),
+              );
             },
           ),
         ],
@@ -117,7 +118,9 @@ class ProfileWidget extends StatelessWidget {
       backgroundImage: user?.photoURL != null
           ? NetworkImage(user!.photoURL!)
           : const AssetImage('assets/default_profile.png') as ImageProvider,
-      backgroundColor: Colors.grey.shade200,
+      backgroundColor: Colors.grey.shade200
+    );
+  }
 }
 
 class surelogout extends StatefulWidget {
