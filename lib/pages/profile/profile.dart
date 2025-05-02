@@ -4,29 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:zuff/pages/profile/suredelete.dart';
-import 'package:zuff/pages/profile/surelogout.dart';
-import '../../providers/themeprovider.dart';
-import '../../theme/theme.dart';
-import 'edit_profile.dart';
+import 'package:zuff/pages/profile/petprofile.dart';
 import 'menu.dart';
-
-
-//para testing
-final List<String> userPhotos = [
-  'https://via.placeholder.com/150',
-  'https://via.placeholder.com/160',
-  'https://via.placeholder.com/170',
-  'https://via.placeholder.com/180',
-  'https://via.placeholder.com/190',
-  'https://via.placeholder.com/200',
-];
 
 class ProfileWidget extends StatefulWidget {
   const ProfileWidget({super.key});
-
 
   @override
   State<ProfileWidget> createState() => _ProfileWidgetState();
@@ -68,10 +51,9 @@ class _ProfileWidgetState extends State<ProfileWidget> {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final ref = FirebaseStorage.instance
           .ref()
-          .child('users/$userId/images/image_$timestamp.jpg');
+          .child('users/$userId/photos/image_$timestamp.jpg');
       await ref.putFile(file);
 
-      // Reload user photos
       await _loadUserPhotos();
     } catch (e) {
       debugPrint('Error uploading image to gallery: $e');
@@ -128,7 +110,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
         if (userInfo.exists) {
           setState(() {
             name = userInfo['display_name'] ?? 'User123';
-            email = userInfo['email'] ?? 'jonh.doe@gmail.com';
+            email = userInfo['email'] ?? 'john.doe@gmail.com';
             creationDate = userInfo['created_time'] ?? '${DateTime.now()}';
           });
 
@@ -154,7 +136,6 @@ class _ProfileWidgetState extends State<ProfileWidget> {
 
       final imageUrl = await ref.getDownloadURL();
 
-      // Update profile picture (optional)
       await user!.updatePhotoURL(imageUrl);
       await FirebaseAuth.instance.currentUser!.reload();
 
@@ -162,7 +143,6 @@ class _ProfileWidgetState extends State<ProfileWidget> {
         user = FirebaseAuth.instance.currentUser;
       });
 
-      // Reload photo gallery
       await _loadUserPhotos();
     } catch (e) {
       debugPrint('Error uploading image: $e');
@@ -177,11 +157,17 @@ class _ProfileWidgetState extends State<ProfileWidget> {
 
     try {
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('pets') // Replace with your collection name
+          .collection('pets')
           .where('Owner', isEqualTo: user!.uid)
           .get();
 
-      final animals = snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+      final animals = snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        print('Animal data: $data');
+        return data;
+      }).toList();
+
 
       setState(() {
         userAnimals = animals;
@@ -193,6 +179,35 @@ class _ProfileWidgetState extends State<ProfileWidget> {
         isLoadingAnimals = false;
       });
     }
+  }
+
+  Widget _buildAvatar() {
+    return Stack(
+      alignment: Alignment.bottomRight,
+      children: [
+        CircleAvatar(
+          radius: 50,
+          backgroundImage: user?.photoURL != null
+              ? NetworkImage(user!.photoURL!)
+              : const AssetImage('assets/default_avatar.png') as ImageProvider,
+        ),
+        Positioned(
+          bottom: 0,
+          right: 0,
+          child: InkWell(
+            onTap: _pickAndUploadImage,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.teal,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.edit, color: Colors.white, size: 20),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -219,7 +234,6 @@ class _ProfileWidgetState extends State<ProfileWidget> {
           ),
         ],
       ),
-
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -232,7 +246,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
             ),
             const SizedBox(height: 8),
             Text(
-              user?.email ?? 'Email não disponível',
+              email,
               style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 8),
@@ -242,56 +256,131 @@ class _ProfileWidgetState extends State<ProfileWidget> {
             ),
             const SizedBox(height: 40),
             SizedBox(
-              height: 120, // Altura ajustada para caber a lista de animais
-              child: isLoadingAnimals
-                  ? const Center(
-                child: CircularProgressIndicator(), // Apenas um indicador centralizado
-              )
-                  : userAnimals.isEmpty
-                  ? const Center(
-                child: Text(
-                  'No pets found.',
-                  textAlign: TextAlign.center,
-                ),
-              )
-                  : ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: userAnimals.length,
-                itemBuilder: (context, index) {
-                  final animal = userAnimals[index];
-                  return FutureBuilder<String>(
-                    future: FirebaseStorage.instance
-                        .ref(animal['Image']) // Caminho para a imagem no Firebase Storage
-                        .getDownloadURL(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const SizedBox(); // Evita múltiplos indicadores
-                      } else if (snapshot.hasError) {
-                        return const Icon(Icons.error, color: Colors.red);
-                      } else if (!snapshot.hasData) {
-                        return const Icon(Icons.broken_image, color: Colors.grey);
-                      }
-
-                      final imageUrl = snapshot.data!;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: Column(
-                          children: [
-                            CircleAvatar(
-                              radius: 35,
-                              backgroundImage: NetworkImage(imageUrl),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              animal['Name'] ?? 'Unknown',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ],
+              height: 160,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'My Pets',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      );
-                    },
-                  );
-                },
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 4.0),
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: userAnimals.length + 1, // +1 for the add pet button
+                        itemBuilder: (context, index) {
+                          // Add Pet button at the END
+                          if (index == userAnimals.length) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 16),
+                              child: GestureDetector(
+                                onTap: () {
+                                  // TODO: Navigate to Add Animal page
+                                },
+                                child: const Column(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 35,
+                                      child: Icon(Icons.add, size: 35),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text('Add Pet', style: TextStyle(fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+
+                          final animal = userAnimals[index];
+                          final petId = animal['id'];
+
+                          final imagePath = animal['Image'];
+                          if (imagePath is! String || imagePath.isEmpty) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 16),
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => PetProfilePage(id: petId),
+                                    ),
+                                  );
+                                },
+                                child: Column(
+                                  children: [
+                                    const CircleAvatar(
+                                      radius: 35,
+                                      child: Icon(Icons.pets),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      '${animal['Name'] ?? 'Unknown'}',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+
+                          return FutureBuilder<String>(
+                            future: FirebaseStorage.instance.ref(imagePath).getDownloadURL(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const SizedBox(width: 70);
+                              } else if (snapshot.hasError || !snapshot.hasData) {
+                                return const Icon(Icons.error, color: Colors.red);
+                              }
+
+                              final imageUrl = snapshot.data!;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 16),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => PetProfilePage(id: petId),
+                                      ),
+                                    );
+                                  },
+                                  child: Column(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 35,
+                                        backgroundImage: NetworkImage(imageUrl),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        '${animal['Name'] ?? 'Unknown'}',
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 12),
@@ -302,12 +391,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                 child: isLoadingPhotos
                     ? const Center(child: CircularProgressIndicator())
                     : userPhotos.isEmpty
-                    ? const Center(
-                  child: Text(
-                    'Nenhuma foto enviada ainda.',
-                    textAlign: TextAlign.center,
-                  ),
-                )
+                    ? const Center(child: Text('Nenhuma foto enviada ainda.'))
                     : GridView.count(
                   crossAxisCount: 3,
                   mainAxisSpacing: 8,
@@ -334,39 +418,9 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                 ),
               ),
             ),
-          ]
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _buildAvatar() {
-    return Stack(
-      alignment: Alignment.bottomRight,
-      children: [
-        CircleAvatar(
-          radius: 60,
-          backgroundImage: user?.photoURL != null
-              ? NetworkImage(user!.photoURL!)
-              : const AssetImage('assets/icons/user.png') as ImageProvider,
-          backgroundColor: Colors.grey.shade200,
-        ),
-        Positioned(
-          bottom: 0,
-          right: 4,
-          child: GestureDetector(
-            onTap: _pickAndUploadImage,
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.blue,
-                shape: BoxShape.circle,
-              ),
-              padding: const EdgeInsets.all(6),
-              child: const Icon(Icons.add, size: 20, color: Colors.white),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

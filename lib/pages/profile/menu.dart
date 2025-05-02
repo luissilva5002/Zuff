@@ -8,7 +8,7 @@ import '../../theme/theme.dart';
 import 'edit_profile.dart';
 
 class MenuPage extends StatelessWidget {
-  const MenuPage({Key? key}) : super(key: key);
+  const MenuPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +70,7 @@ class MenuPage extends StatelessWidget {
                 );
               },
             ),
+            const SizedBox(height: 12),
             _buildMenuCard(
                 context,
                 icon: Icons.delete,
@@ -83,7 +84,6 @@ class MenuPage extends StatelessWidget {
                 },
 
               ),
-
           ],
         ),
       ),
@@ -186,7 +186,7 @@ class MenuPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              SizedBox(
+              const SizedBox(
                 width: 50,
                 child: ThemeSwitch(),
               ),
@@ -199,23 +199,25 @@ class MenuPage extends StatelessWidget {
 }
 
 class ThemeSwitch extends StatelessWidget {
+  const ThemeSwitch({super.key});
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return SwitchTheme(
       data: SwitchThemeData(
-        thumbColor: MaterialStateProperty.resolveWith<Color>(
-              (Set<MaterialState> states) {
+        thumbColor: WidgetStateProperty.resolveWith<Color>(
+              (Set<WidgetState> states) {
             if (themeProvider.themeData == darkMode) {
               return Theme.of(context).colorScheme.onPrimary;
             }
             return Theme.of(context).colorScheme.primary;
           },
         ),
-        trackColor: MaterialStateProperty.resolveWith<Color>(
-              (Set<MaterialState> states) {
-            return states.contains(MaterialState.selected)
+        trackColor: WidgetStateProperty.resolveWith<Color>(
+              (Set<WidgetState> states) {
+            return states.contains(WidgetState.selected)
                 ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
                 : Colors.grey.withOpacity(0.5);
           },
