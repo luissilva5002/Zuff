@@ -34,7 +34,7 @@ class _HomeState extends State<Home> {
       Dashboard(),
       DMPage(),
       EventsPage(),
-      ProfileWidget() // para teste da pagina
+      Profile() // para teste da pagina
     ];
 
     return Scaffold(
