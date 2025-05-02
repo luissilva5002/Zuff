@@ -11,7 +11,7 @@ import 'package:zuff/pages/profile/surelogout.dart';
 import '../../providers/themeprovider.dart';
 import '../../theme/theme.dart';
 import 'edit_profile.dart';
-import 'package:zuff/pages/profile/petprofile.dart';
+import 'menu.dart';
 
 class ProfileWidget extends StatefulWidget {
   const ProfileWidget({super.key});
@@ -192,34 +192,23 @@ class _ProfileWidgetState extends State<ProfileWidget> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
-          'Meu Perfil',
+          'Profile',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
-        centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit, color: Colors.blue),
-            tooltip: 'Editar Perfil',
+            icon: const Icon(Icons.menu),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const EditProfileWidget()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.red),
-            tooltip: 'Sair',
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => const SureLogout(),
+                MaterialPageRoute(builder: (context) => const MenuPage()),
               );
             },
           ),
         ],
       ),
+
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -390,46 +379,6 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                 ),
               ),
             ),
-            Text('ACCOUNT SETTINGS', textAlign: TextAlign.left, style: TextStyle(fontWeight: FontWeight.bold),),
-            SizedBox(height: 14,),
-            Divider(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Dark Theme'),
-                ThemeSwitch(),
-              ],
-            ),
-            Divider(),
-            SizedBox(height: 10,),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 16.0, bottom: 16.0),
-                  child: Column(
-                    children: [
-                      InkWell(
-                        onTap: () { },//() => launchUrl(Uri.parse('https://papayawhip-scorpion-787598.hostingersite.com/')),
-                        child: Text(
-                          'Help & Support',
-                          style: TextStyle(color: Theme.of(context).colorScheme.primary, decoration: null),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => const SureDelete(),
-                          );
-                        },
-                        child: Text('Delete Account', style: TextStyle(color: Colors.red), textAlign: TextAlign.center),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
           ]
         ),
       ),
@@ -463,24 +412,6 @@ class _ProfileWidgetState extends State<ProfileWidget> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class ThemeSwitch extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context); // Listening here is fine for rendering
-
-    return Switch(
-      value: themeProvider.themeData == darkMode, // True if darkMode is active
-      onChanged: (bool value) {
-        Provider.of<ThemeProvider>(context, listen: false).toggleTheme();
-      },
-      activeTrackColor: Colors.grey,
-      activeColor: Colors.black,
-      inactiveThumbColor: Colors.white,
-      inactiveTrackColor: Colors.grey,
     );
   }
 }
