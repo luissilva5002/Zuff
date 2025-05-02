@@ -221,7 +221,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
             onTap: _pickAndUploadImage,
             child: Container(
               padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.teal,
                 shape: BoxShape.circle,
               ),
@@ -299,7 +299,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                       padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 4.0),
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        itemCount: userAnimals.length + 1, // +1 for the add pet button
+                        itemCount: userAnimals.length + 1,
                         itemBuilder: (context, index) {
                           // Add Pet button at the END
                           if (index == userAnimals.length) {
