@@ -11,18 +11,7 @@ import 'package:zuff/pages/profile/surelogout.dart';
 import '../../providers/themeprovider.dart';
 import '../../theme/theme.dart';
 import 'edit_profile.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-
-
-//para testing
-final List<String> userPhotos = [
-  'https://via.placeholder.com/150',
-  'https://via.placeholder.com/160',
-  'https://via.placeholder.com/170',
-  'https://via.placeholder.com/180',
-  'https://via.placeholder.com/190',
-  'https://via.placeholder.com/200',
-];
+import 'package:zuff/pages/profile/petprofile.dart';
 
 class ProfileWidget extends StatefulWidget {
   const ProfileWidget({super.key});
@@ -253,56 +242,112 @@ class _ProfileWidgetState extends State<ProfileWidget> {
             ),
             const SizedBox(height: 40),
             SizedBox(
-              height: 120, // Altura ajustada para caber a lista de animais
-              child: isLoadingAnimals
-                  ? const Center(
-                child: CircularProgressIndicator(), // Apenas um indicador centralizado
-              )
-                  : userAnimals.isEmpty
-                  ? const Center(
-                child: Text(
-                  'No pets found.',
-                  textAlign: TextAlign.center,
-                ),
-              )
-                  : ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: userAnimals.length,
-                itemBuilder: (context, index) {
-                  final animal = userAnimals[index];
-                  return FutureBuilder<String>(
-                    future: FirebaseStorage.instance
-                        .ref(animal['Image']) // Caminho para a imagem no Firebase Storage
-                        .getDownloadURL(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const SizedBox(); // Evita múltiplos indicadores
-                      } else if (snapshot.hasError) {
-                        return const Icon(Icons.error, color: Colors.red);
-                      } else if (!snapshot.hasData) {
-                        return const Icon(Icons.broken_image, color: Colors.grey);
-                      }
-
-                      final imageUrl = snapshot.data!;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: Column(
-                          children: [
-                            CircleAvatar(
-                              radius: 35,
-                              backgroundImage: NetworkImage(imageUrl),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              animal['Name'] ?? 'Unknown',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ],
+              height: 160, // Adjusted height to fit the title and list
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'My Pets',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      );
-                    },
-                  );
-                },
+                        GestureDetector(
+                          onTap: () {
+                            // Add your logic to navigate to the add pet page
+                          },
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.teal,
+                              shape: BoxShape.circle,
+                            ),
+                            padding: const EdgeInsets.all(8),
+                            child: const Icon(Icons.add, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: isLoadingAnimals
+                        ? const Center(
+                      child: CircularProgressIndicator(),
+                    )
+                        : userAnimals.isEmpty
+                        ? const Center(
+                      child: Text(
+                        'No pets found.',
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                        : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: userAnimals.length,
+                      itemBuilder: (context, index) {
+                        final animal = userAnimals[index];
+                        return FutureBuilder<String>(
+                          future: FirebaseStorage.instance
+                              .ref(animal['Image'])
+                              .getDownloadURL(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const SizedBox();
+                            } else if (snapshot.hasError) {
+                              return const Icon(Icons.error, color: Colors.red);
+                            } else if (!snapshot.hasData) {
+                              return const Icon(Icons.broken_image, color: Colors.grey);
+                            }
+
+                            final imageUrl = snapshot.data!;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 16),
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => PetProfilePage(data: {
+                                        'name': animal['Name'],
+                                        'age': animal['Age'],
+                                        'location': animal['Location'],
+                                        'species': animal['Species'],
+                                        'breed': animal['Breed'],
+                                        'vaccinated': animal['Vaccinated'],
+                                        'birthDate': animal['BirthDate'],
+                                        'owner': animal['Owner'],
+                                        'photoUrl': imageUrl,
+                                      }),
+                                    ),
+                                  );
+                                },
+                                child: Column(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 35,
+                                      backgroundImage: NetworkImage(imageUrl),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      animal['Name'] ?? 'Unknown',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    )
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 12),
