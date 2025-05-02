@@ -1,84 +1,172 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:zuff/pages/profile/profile.dart';
 
-class EditProfileWidget extends StatelessWidget {
+import '../../home.dart';
+
+class EditProfileWidget extends StatefulWidget {
   const EditProfileWidget({super.key});
+
+  @override
+  State<EditProfileWidget> createState() => _EditProfileWidgetState();
+}
+
+class _EditProfileWidgetState extends State<EditProfileWidget> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _bioController = TextEditingController();
+
+  final int _bioMaxLength = 150;
+  final int _nameMaxLength = 20;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data();
+        if (mounted) {
+          setState(() {
+            _bioController.text = data?['bio'] ?? '';
+            _nameController.text = data?['display_name'] ?? '';
+          });
+        }
+      }
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final uid = user.uid;
+    final name = _nameController.text.trim();
+    final bio = _bioController.text.trim();
+
+    try {
+      // Update Firestore
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'display_name': name,
+        'bio': bio,
+      }, SetOptions(merge: true));
+
+      // Update FirebaseAuth display name
+      await user.updateDisplayName(name);
+
+      // Navigate to Home
+      if (FirebaseAuth.instance.currentUser != null) {
+        // If the user is authenticated, go to Home page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Home()),
+        );
+
+        // Navigate to Profile after going to Home
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Profile()),
+        );
+
+        // Clear the stack and go to Profile, this will remove Home from the stack
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const Profile()),
+              (Route<dynamic> route) => false, // Removes all the previous routes
+        );
+      } else {
+        // If the user is not authenticated, go to Profile page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Profile()),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Profile'),
-        backgroundColor: const Color(0xFF009688),
         centerTitle: true,
       ),
-      body: Center(  // Centers everything vertically
+      body: Center(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,  // Center column content vertically
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,  // Makes the column take only necessary space
-              children: [
-                const Text(
-                  'Update your profile information',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Update your profile information',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(height: 24),
-                // Name Field
-                const TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Name',
-                    hintText: 'Enter your name',
-                    border: OutlineInputBorder(),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black,),
-                    ),
-                    contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                  ),
+              ),
+              const SizedBox(height: 24),
+
+              // Name Field
+              TextField(
+                controller: _nameController,
+                maxLength: _nameMaxLength,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  hintText: 'Enter your name',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                  EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                 ),
-                const SizedBox(height: 16),
-                // Bio Field
-                const TextField(
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    labelText: 'Bio',
-                    hintText: 'Tell us something about yourself...',
-                    border: OutlineInputBorder(),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black,),
-                    ),
-                    contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                  ),
+              ),
+              const SizedBox(height: 16),
+
+              // Bio Field
+              TextField(
+                controller: _bioController,
+                maxLength: _bioMaxLength,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Bio',
+                  hintText: 'Tell us something about yourself...',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                  EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                 ),
-                const SizedBox(height: 24),
-                // Save Button
-                ElevatedButton(
-                  onPressed: () {
-                    // Save profile changes logic
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Profile updated successfully!')),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF009688),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    minimumSize: const Size(double.infinity, 50),
+              ),
+              const SizedBox(height: 24),
+
+              // Save Button
+              ElevatedButton(
+                onPressed: _saveProfile,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    'Save Changes',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  minimumSize: const Size(double.infinity, 50),
                 ),
-              ],
-            ),
+                child: const Text(
+                  'Save Changes',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
           ),
         ),
       ),

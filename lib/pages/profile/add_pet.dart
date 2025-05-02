@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:zuff/pages/profile/profile.dart';
-
 import '../../home.dart';
 
 class AddPetPage extends StatefulWidget {
@@ -19,13 +18,13 @@ class AddPetPage extends StatefulWidget {
 class _AddPetPageState extends State<AddPetPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _ageController = TextEditingController();
   final TextEditingController _speciesController = TextEditingController();
   final TextEditingController _breedController = TextEditingController();
   final TextEditingController _birthDateController = TextEditingController();
   final TextEditingController _districtController = TextEditingController();
   String? _selectedDistrict;
   bool _isVaccinated = false;
+  bool _isForAdoption = false;
   File? _imageFile;
   bool _isLoading = false;
   final userId = FirebaseAuth.instance.currentUser?.uid;
@@ -59,6 +58,15 @@ class _AddPetPageState extends State<AddPetPage> {
       _isLoading = true;
     });
 
+    final birthDate = DateFormat('yyyy-MM-dd').parse(_birthDateController.text);
+    final currentDate = DateTime.now();
+
+    int age = currentDate.year - birthDate.year;
+    if (currentDate.month < birthDate.month ||
+        (currentDate.month == birthDate.month && currentDate.day < birthDate.day)) {
+      age--;
+    }
+
     try {
       String? imagePath;
       if (_imageFile != null) {
@@ -69,9 +77,8 @@ class _AddPetPageState extends State<AddPetPage> {
       }
 
       await FirebaseFirestore.instance.collection('pets').add({
-        'Adoption': false,
+        'Adoption': _isForAdoption,
         'Name': _nameController.text,
-        'Age': int.tryParse(_ageController.text) ?? 0,
         'Species': _speciesController.text,
         'Breed': _breedController.text,
         'District': _selectedDistrict,
@@ -79,6 +86,7 @@ class _AddPetPageState extends State<AddPetPage> {
         'BirthDate': _birthDateController.text,
         'Image': imagePath ?? '',
         'Owner': userId,
+        'Age': age,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -164,7 +172,6 @@ class _AddPetPageState extends State<AddPetPage> {
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
-                    controller: _ageController,
                     decoration: const InputDecoration(labelText: 'Age'),
                     keyboardType: TextInputType.number,
                     validator: (value) {
@@ -227,6 +234,21 @@ class _AddPetPageState extends State<AddPetPage> {
                       const Text('Vaccinated'),
                     ],
                   ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Checkbox(
+                        value: _isForAdoption,
+                        onChanged: (value) {
+                          setState(() {
+                            _isForAdoption = value!;
+                          });
+                        },
+                      ),
+                      const Text('For Adoption'),
+                    ],
+                  ),
+
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _birthDateController,
@@ -241,15 +263,16 @@ class _AddPetPageState extends State<AddPetPage> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : ElevatedButton(
-                    onPressed: _submitForm,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 15.0),
-                      textStyle: const TextStyle(fontSize: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _submitForm,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 15.0),
+                        textStyle: const TextStyle(fontSize: 16),
+                      ),
+                      child: const Text('Add Pet'),
                     ),
-                    child: const Text('Add Pet'),
                   ),
                 ],
               ),

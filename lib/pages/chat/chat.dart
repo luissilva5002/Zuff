@@ -134,7 +134,7 @@ class _ChatPageState extends State<ChatPage> {
                         padding: EdgeInsets.all(10),
                         margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                         decoration: BoxDecoration(
-                          color: isMe ? Colors.blue : Colors.grey[300],
+                          color: isMe ? Colors.blue :  Theme.of(context).colorScheme.tertiary,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(message['text']),
