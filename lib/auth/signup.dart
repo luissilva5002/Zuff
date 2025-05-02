@@ -137,7 +137,7 @@ class _SignUpPageState extends State<SignUpPage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF94a9a7),
+              Color(0xFF009688),
               Color(0xFF94a9a7),
             ],
             begin: Alignment.topLeft,
@@ -156,7 +156,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     style: TextStyle(color: Colors.white, fontSize: 80, fontWeight: FontWeight.bold, fontFamily: 'RobotoSlab',),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 70),
+                  const SizedBox(height: 40),
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -303,7 +303,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             child: ElevatedButton(
                               onPressed: signUp,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
+                                backgroundColor: Color(0xFF009688),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -382,7 +382,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                   text: 'Sign In',
                                   style: const TextStyle(
                                     decoration: TextDecoration.underline,
-                                    color: Colors.blue,
+                                    color: Color(0xFF009688),
                                   ),
                                 ),
                               ],

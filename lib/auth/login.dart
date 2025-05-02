@@ -90,7 +90,7 @@ class _LoginPageState extends State<LoginPage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF94a9a7),
+              Color(0xFF009688),
               Color(0xFF94a9a7),
             ],
             begin: Alignment.topLeft,
@@ -191,7 +191,7 @@ class _LoginPageState extends State<LoginPage> {
                               child: ElevatedButton(
                                 onPressed: signInWithEmail,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue,
+                                  backgroundColor: Color(0xFF009688),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
@@ -270,7 +270,7 @@ class _LoginPageState extends State<LoginPage> {
                                     text: 'Click Here',
                                     style: const TextStyle(
                                       decoration: TextDecoration.underline,
-                                      color: Colors.blue,
+                                      color: Color(0xFF009688),
                                     ),
                                   ),
                                 ],
@@ -292,7 +292,7 @@ class _LoginPageState extends State<LoginPage> {
                                     text: 'Create Here',
                                     style: const TextStyle(
                                       decoration: TextDecoration.underline,
-                                      color: Colors.blue,
+                                      color: Color(0xFF009688),
                                     ),
                                   ),
                                 ],
