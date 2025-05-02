@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:zuff/pages/profile/suredelete.dart';
+import 'package:zuff/pages/profile/surelogout.dart';
 
 import '../../providers/themeprovider.dart';
 import '../../theme/theme.dart';
@@ -62,7 +63,11 @@ class MenuPage extends StatelessWidget {
               icon: Icons.logout_outlined,
               title: "Log Out",
               onTap: () {
-                // Handle logout
+                showDialog(
+                  context: context,
+                  barrierColor: Colors.black.withOpacity(0.4), // Blacked-out background
+                  builder: (context) => const SureLogout(),
+                );
               },
             ),
             _buildMenuCard(

@@ -90,11 +90,8 @@ class _LoginPageState extends State<LoginPage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF30402C), // Dark blue
-              Color(0xFF405934), // Teal blue
-              Color(0xFF738C3E), // Greenish blue
-              Color(0xFFACBF65),
-              Color(0xFFBFAE99)// Vibrant green
+              Color(0xFF94a9a7),
+              Color(0xFF94a9a7),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -108,8 +105,8 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   const Text(
-                    'UniGreen',
-                    style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
+                    'Zuff',
+                    style: TextStyle(color: Colors.white, fontSize: 80, fontWeight: FontWeight.bold, fontFamily: 'RobotoSlab',),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 50),

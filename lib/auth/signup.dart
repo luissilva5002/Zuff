@@ -130,11 +130,8 @@ class _SignUpPageState extends State<SignUpPage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF011526),
-              Color(0xFF012E40),
-              Color(0xFF025959),
-              Color(0xFF02735E),
-              Color(0xFF038C65)
+              Color(0xFF94a9a7),
+              Color(0xFF94a9a7),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -148,8 +145,8 @@ class _SignUpPageState extends State<SignUpPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    'UniGreen',
-                    style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
+                    'Zuff',
+                    style: TextStyle(color: Colors.white, fontSize: 80, fontWeight: FontWeight.bold, fontFamily: 'RobotoSlab',),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 70),
