@@ -20,7 +20,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
   User? user = FirebaseAuth.instance.currentUser;
 
   List<String> userPhotos = [];
-  bool isLoadingPhotos = true;
+  bool isLoading = true;
 
   String name = 'unknown';
   String email = 'unknown';
@@ -29,14 +29,15 @@ class _ProfileWidgetState extends State<ProfileWidget> {
   User? currentUser;
 
   List<Map<String, dynamic>> userAnimals = [];
-  bool isLoadingAnimals = true;
 
   @override
   void initState() {
     super.initState();
+    isLoading = true;
     _loadUserPhotos();
     _loadUserInfo();
     _loadUserAnimals();
+    isLoading = false;
   }
 
   Future<void> _pickAndUploadGalleryPhoto() async {
@@ -67,6 +68,10 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     if (user == null) return;
 
     try {
+      setState(() {
+        isLoading = true;
+      });
+
       final ref = FirebaseStorage.instance.ref().child('users/${user!.uid}/photos');
       final ListResult result = await ref.listAll();
 
@@ -76,12 +81,12 @@ class _ProfileWidgetState extends State<ProfileWidget> {
 
       setState(() {
         userPhotos = urls;
-        isLoadingPhotos = false;
+        isLoading = false;
       });
     } catch (e) {
       debugPrint('Error loading photos: $e');
       setState(() {
-        isLoadingPhotos = false;
+        isLoading = false;
       });
     }
   }
@@ -89,6 +94,10 @@ class _ProfileWidgetState extends State<ProfileWidget> {
   Future<void> _loadUserInfo() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     currentUser = FirebaseAuth.instance.currentUser;
+
+    setState(() {
+      isLoading = true;
+    });
 
     if (currentUser != null) {
       String? savedName = prefs.getString('name');
@@ -120,6 +129,10 @@ class _ProfileWidgetState extends State<ProfileWidget> {
         }
       }
     }
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   Future<void> _pickAndUploadImage() async {
@@ -141,9 +154,15 @@ class _ProfileWidgetState extends State<ProfileWidget> {
 
       setState(() {
         user = FirebaseAuth.instance.currentUser;
+        isLoading = true;
       });
 
       await _loadUserPhotos();
+
+      setState(() {
+        isLoading = false;
+      });
+
     } catch (e) {
       debugPrint('Error uploading image: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -156,6 +175,10 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     if (user == null) return;
 
     try {
+      setState(() {
+        isLoading = true;
+      });
+
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('pets')
           .where('Owner', isEqualTo: user!.uid)
@@ -171,12 +194,12 @@ class _ProfileWidgetState extends State<ProfileWidget> {
 
       setState(() {
         userAnimals = animals;
-        isLoadingAnimals = false;
+        isLoading = false;
       });
     } catch (e) {
       debugPrint('Error loading animals: $e');
       setState(() {
-        isLoadingAnimals = false;
+        isLoading = false;
       });
     }
   }
@@ -245,18 +268,13 @@ class _ProfileWidgetState extends State<ProfileWidget> {
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text(
-              email,
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-            const SizedBox(height: 8),
             const Text(
-              'Bio curta ou status aqui...',
+              'No Bio...',
               style: TextStyle(fontSize: 14, color: Colors.black54),
             ),
             const SizedBox(height: 40),
             SizedBox(
-              height: 160,
+              height: 152,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -383,27 +401,24 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: const Divider(thickness: 1, height: 1, color: Colors.grey,),
+            ),
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SizedBox(
                 height: 300,
-                child: isLoadingPhotos
+                child: isLoading
                     ? const Center(child: CircularProgressIndicator())
-                    : userPhotos.isEmpty
-                    ? const Center(child: Text('Nenhuma foto enviada ainda.'))
                     : GridView.count(
                   crossAxisCount: 3,
                   mainAxisSpacing: 8,
                   crossAxisSpacing: 8,
                   physics: const NeverScrollableScrollPhysics(),
                   children: [
-                    ...userPhotos.map((url) {
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(url, fit: BoxFit.cover),
-                      );
-                    }).toList(),
+                    // Always include the "+" square first
                     GestureDetector(
                       onTap: _pickAndUploadGalleryPhoto,
                       child: Container(
@@ -414,6 +429,16 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                         child: const Icon(Icons.add, size: 40, color: Colors.black54),
                       ),
                     ),
+                    // Then display the photos (if any)
+                    ...userPhotos.map((url) {
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          url,
+                          fit: BoxFit.cover,
+                        ),
+                      );
+                    }),
                   ],
                 ),
               ),
