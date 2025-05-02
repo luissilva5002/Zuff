@@ -75,7 +75,6 @@ class _EventsPageState extends State<EventsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Upcoming Pet Events"),
-        backgroundColor: const Color(0xFF94a9a7),
       ),
       body: StreamBuilder<List<Event>>(
         stream: getUpcomingEvents(),
@@ -102,7 +101,6 @@ class _EventsPageState extends State<EventsPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                color: Colors.white,
                 child: InkWell(
                   onTap: () {
                     setState(() {
@@ -119,14 +117,12 @@ class _EventsPageState extends State<EventsPage> {
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           DateFormat('MMM d, yyyy – h:mm a').format(event.date),
                           style: TextStyle(
-                            color: Colors.grey[700],
                             fontSize: 14,
                           ),
                         ),
@@ -173,7 +169,7 @@ class _EventsPageState extends State<EventsPage> {
                                   icon: const Icon(Icons.open_in_browser),
                                   label: const Text("Visit Event Website"),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF94a9a7),
+                                    backgroundColor: Theme.of(context).colorScheme.secondary,
                                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),

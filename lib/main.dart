@@ -23,7 +23,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(create: (context) => ThemeProvider()), // Add your ThemeProvider here
       ],
       child: MyApp(),
     ),
@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
           navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
           scaffoldMessengerKey: Utils.messengerKey,
-          theme: themeProvider.themeData,
+          theme: Provider.of<ThemeProvider>(context).themeData,
           home: const AuthStreamBuilder(),
         );
       },

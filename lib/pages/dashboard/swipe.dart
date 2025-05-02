@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
+import '../../home.dart';
+
 class Pet {
   final String id;
   final String name;
@@ -168,12 +170,75 @@ class _PetSwipeState extends State<PetSwipe> {
       return "";
     }
   }
+
+  Future<void> _clearPets() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        // Update the Firebase user's document to empty the "pets" array
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'rejected': []});
+
+        // Optionally, clear the local _pets array as well
+        setState(() {
+          _pets.clear();
+        });
+
+        // Navigate to Home
+        if (FirebaseAuth.instance.currentUser != null) {
+
+          // Clear the stack and go to Profile, this will remove Home from the stack
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const Home()),
+                (Route<dynamic> route) => false, // Removes all the previous routes
+          );
+        } else {
+          // If the user is not authenticated, go to Profile page
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const Home()),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error clearing pets: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   Widget _buildPetCard() {
     if (_pets.isEmpty) {
-      return const Center(
-          child: Text("No more pets!", style: TextStyle(fontSize: 22)));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center, // This will center the children vertically
+          crossAxisAlignment: CrossAxisAlignment.center, // This will center the children horizontally
+          children: [
+            const Text("No more pets!", style: TextStyle(fontSize: 22)),
+            GestureDetector(
+              onTap: _clearPets,
+              child: RichText(
+                text: const TextSpan(
+                  children: [
+                    TextSpan(
+                      text: "Reload already seen pets",
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 16,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
     }
-
     final pet = _pets[currentPetIndex];
 
     return Dismissible(

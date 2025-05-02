@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zuff/pages/profile/petprofile.dart';
 import 'add_pet.dart';
 import 'menu.dart';
@@ -25,6 +24,7 @@ class _ProfileWidgetState extends State<Profile> {
   bool isLoading = true;
 
   String name = 'unknown';
+  String bio = 'No Bio...';
   String email = 'unknown';
   String creationDate = '${DateTime.now()}';
 
@@ -64,16 +64,6 @@ class _ProfileWidgetState extends State<Profile> {
 
       final downloadUrl = await ref.getDownloadURL();
 
-      // Update SharedPreferences
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      List<String> existingPhotos = prefs.getStringList('userPhotos') ?? [];
-      existingPhotos.add(downloadUrl);
-      await prefs.setStringList('userPhotos', existingPhotos);
-
-      setState(() {
-        userPhotos = existingPhotos;
-      });
-
     } catch (e) {
       debugPrint('Error uploading image to gallery: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -83,8 +73,6 @@ class _ProfileWidgetState extends State<Profile> {
   }
   Future<void> _loadUserPhotos() async {
     if (user == null) return;
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
 
     try {
       setState(() {
@@ -96,7 +84,6 @@ class _ProfileWidgetState extends State<Profile> {
 
       final urls = await Future.wait(result.items.map((item) => item.getDownloadURL()));
 
-      await prefs.setStringList('userPhotos', urls);
 
       setState(() {
         userPhotos = urls;
@@ -106,13 +93,6 @@ class _ProfileWidgetState extends State<Profile> {
     } catch (e) {
       debugPrint('Error loading photos: $e');
 
-      // Fallback to SharedPreferences
-      List<String>? cachedUrls = prefs.getStringList('userPhotos');
-      if (cachedUrls != null) {
-        setState(() {
-          userPhotos = cachedUrls;
-        });
-      }
 
       setState(() {
         isLoading = false;
@@ -120,7 +100,6 @@ class _ProfileWidgetState extends State<Profile> {
     }
   }
   Future<void> _loadUserInfo() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
     currentUser = FirebaseAuth.instance.currentUser;
 
     if (currentUser == null) return;
@@ -129,33 +108,18 @@ class _ProfileWidgetState extends State<Profile> {
       isLoading = true;
     });
 
-    String? savedName = prefs.getString('name');
-    String? savedEmail = prefs.getString('email');
-    String? savedCreationDate = prefs.getString('creationDate');
-
-    if (savedName != null && savedEmail != null && savedCreationDate != null) {
-      setState(() {
-        name = savedName;
-        email = savedEmail;
-        creationDate = savedCreationDate;
-      });
-    } else {
-      DocumentSnapshot userInfo = await FirebaseFirestore.instance
+    DocumentSnapshot userInfo = await FirebaseFirestore.instance
           .collection('users')
           .doc(currentUser!.uid)
           .get();
 
-      if (userInfo.exists) {
+    if (userInfo.exists) {
         setState(() {
           name = userInfo['display_name'] ?? 'User123';
+          bio = userInfo['bio'] ?? 'No Bio...';
           email = userInfo['email'] ?? 'john.doe@gmail.com';
           creationDate = userInfo['created_time'] ?? '${DateTime.now()}';
         });
-
-        await prefs.setString('name', name);
-        await prefs.setString('email', email);
-        await prefs.setString('creationDate', creationDate);
-      }
     }
 
     setState(() {
@@ -177,9 +141,6 @@ class _ProfileWidgetState extends State<Profile> {
       await user!.updatePhotoURL(imageUrl);
       await FirebaseAuth.instance.currentUser!.reload();
 
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('profileImageUrl', imageUrl);
-
       setState(() {
         user = FirebaseAuth.instance.currentUser;
         isLoading = false;
@@ -198,7 +159,6 @@ class _ProfileWidgetState extends State<Profile> {
   Future<void> _loadUserAnimals() async {
     if (user == null) return;
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
 
     try {
       setState(() => isLoading = true);
@@ -214,7 +174,6 @@ class _ProfileWidgetState extends State<Profile> {
         return data;
       }).toList();
 
-      await prefs.setString('userAnimals', jsonEncode(animals));
 
       setState(() {
         userAnimals = animals;
@@ -223,13 +182,6 @@ class _ProfileWidgetState extends State<Profile> {
 
     } catch (e) {
       debugPrint('Error loading animals: $e');
-
-      // Load cached animals if available
-      final cached = prefs.getString('userAnimals');
-      if (cached != null) {
-        final decoded = List<Map<String, dynamic>>.from(jsonDecode(cached));
-        setState(() => userAnimals = decoded);
-      }
 
       setState(() => isLoading = false);
     }
@@ -267,18 +219,13 @@ class _ProfileWidgetState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor:  Theme.of(context).colorScheme.surface,
         elevation: 0,
-        title: const Text(
-          'Profile',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        iconTheme: const IconThemeData(color: Colors.black),
+        title: const Text("Profile"),
         actions: [
           IconButton(
-            icon: const Icon(Icons.menu),
+            icon: Icon(Icons.menu, color:  Theme.of(context).colorScheme.primary,),
             onPressed: () {
               Navigator.push(
                 context,
@@ -300,10 +247,13 @@ class _ProfileWidgetState extends State<Profile> {
               name,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'No Bio...',
-              style: TextStyle(fontSize: 14, color: Colors.black54),
+            const SizedBox(height: 16.0),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                bio,
+                style: TextStyle(fontSize: 14, color:  Theme.of(context).colorScheme.primary),
+              ),
             ),
             const SizedBox(height: 40),
             SizedBox(
@@ -345,10 +295,11 @@ class _ProfileWidgetState extends State<Profile> {
                                     MaterialPageRoute(builder: (context) => const AddPetPage()),
                                   );
                                 },
-                                child: const Column(
+                                child: Column(
                                   children: [
                                     CircleAvatar(
                                       radius: 35,
+                                      backgroundColor: Theme.of(context).colorScheme.secondary,
                                       child: Icon(Icons.add, size: 35),
                                     ),
                                     SizedBox(height: 8),
@@ -377,9 +328,10 @@ class _ProfileWidgetState extends State<Profile> {
                                 },
                                 child: Column(
                                   children: [
-                                    const CircleAvatar(
+                                    CircleAvatar(
                                       radius: 35,
-                                      child: Icon(Icons.pets),
+                                      backgroundColor: Theme.of(context).colorScheme.tertiary,
+                                      child: const Icon(Icons.pets),
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
@@ -400,7 +352,6 @@ class _ProfileWidgetState extends State<Profile> {
                               } else if (snapshot.hasError || !snapshot.hasData) {
                                 return const Icon(Icons.error, color: Colors.red);
                               }
-
                               final imageUrl = snapshot.data!;
                               return Padding(
                                 padding: const EdgeInsets.only(right: 16),
@@ -416,6 +367,7 @@ class _ProfileWidgetState extends State<Profile> {
                                   child: Column(
                                     children: [
                                       CircleAvatar(
+                                        backgroundColor: Theme.of(context).colorScheme.tertiary,
                                         radius: 35,
                                         backgroundImage: NetworkImage(imageUrl),
                                       ),
@@ -439,7 +391,7 @@ class _ProfileWidgetState extends State<Profile> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: const Divider(thickness: 1, height: 1, color: Colors.grey,),
+              child: Divider(thickness: 2, height: 2, color: Theme.of(context).colorScheme.tertiary),
             ),
             const SizedBox(height: 12),
             Padding(
@@ -454,15 +406,14 @@ class _ProfileWidgetState extends State<Profile> {
                   crossAxisSpacing: 8,
                   physics: const NeverScrollableScrollPhysics(),
                   children: [
-                    // Always include the "+" square first
                     GestureDetector(
                       onTap: _pickAndUploadGalleryPhoto,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
+                          color:  Theme.of(context).colorScheme.tertiary,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.add, size: 40, color: Colors.black54),
+                        child: Icon(Icons.add, size: 40, color:  Theme.of(context).colorScheme.primary),
                       ),
                     ),
                     // Then display the photos (if any)
