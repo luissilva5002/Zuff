@@ -1,6 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class ChatPage extends StatefulWidget {
   final String conversationId;
@@ -13,8 +13,41 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  final String currentUserId = "user1";
+  final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
   final TextEditingController _controller = TextEditingController();
+
+  String otherUserName = 'Loading...';
+
+  @override
+  void initState() {
+    super.initState();
+    fetchOtherUserName();
+  }
+
+  Future<void> fetchOtherUserName() async {
+    try {
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.otherUserId)
+          .get();
+
+      if (doc.exists) {
+        var data = doc.data() as Map<String, dynamic>;
+        setState(() {
+          otherUserName = data['display_name'] ?? 'Unknown';
+        });
+      } else {
+        setState(() {
+          otherUserName = 'Unknown';
+        });
+      }
+    } catch (e) {
+      print('Error fetching user name: $e');
+      setState(() {
+        otherUserName = 'Unknown';
+      });
+    }
+  }
 
   Stream<QuerySnapshot> getMessages() {
     return FirebaseFirestore.instance
@@ -53,7 +86,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Chat with ${widget.otherUserId}')),
+      appBar: AppBar(title: Text('Chat with $otherUserName')),
       body: Column(
         children: [
           Expanded(

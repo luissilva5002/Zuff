@@ -31,28 +31,39 @@ class DMPage extends StatelessWidget {
 
           return ListView.builder(
             itemCount: conversations.length,
-            itemBuilder: (context, index) {
-              var conversation = conversations[index];
-              var otherUserId = (conversation['participants'] as List<dynamic>)
-                  .cast<String>()
-                  .firstWhere((id) => id != currentUserId);
+              itemBuilder: (context, index) {
+                var conversation = conversations[index];
+                var participants = (conversation['participants'] as List<dynamic>).cast<String>();
+                var otherUserId = participants.firstWhere((id) => id != currentUserId);
 
-              return ListTile(
-                title: Text('Chat with $otherUserId'),
-                subtitle: Text(conversation['lastMessage'] ?? ''),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ChatPage(
-                        conversationId: conversation.id,
-                        otherUserId: otherUserId,
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
+                return FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance.collection('users').doc(otherUserId).get(),
+                  builder: (context, userSnapshot) {
+                    if (!userSnapshot.hasData) {
+                      return ListTile(title: Text('Loading...'));
+                    }
+
+                    var userData = userSnapshot.data!.data() as Map<String, dynamic>?;
+                    String otherUserName = userData?['display_name'] ?? 'Unknown';
+
+                    return ListTile(
+                      title: Text('Chat with $otherUserName'),
+                      subtitle: Text(conversation['lastMessage'] ?? ''),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ChatPage(
+                              conversationId: conversation.id,
+                              otherUserId: otherUserId,
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              }
           );
         },
       ),
