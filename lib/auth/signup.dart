@@ -28,10 +28,14 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _isPasswordVisible = false;
 
   Future<void> uploadInfo() async {
+    List<String> accepted = [''];
+    List<String> rejected = [''];
+
     var now = DateTime.now();
     var formatter = DateFormat();
     String date = formatter.format(now);
     currentUser = FirebaseAuth.instance.currentUser;
+
     try {
       if (currentUser != null) {
         await FirebaseFirestore.instance
@@ -41,12 +45,15 @@ class _SignUpPageState extends State<SignUpPage> {
           'email': emailController.text.trim(),
           'created_time': date,
           'display_name': nameController.text.trim(),
+          'accepted': accepted, // Store accepted array in Firestore
+          'rejected': rejected, // Store rejected array in Firestore
         });
       }
     } catch (e) {
       print("Error uploading info: $e");
     }
   }
+
 
   Future signUp() async {
     final isValid = formKey.currentState!.validate();

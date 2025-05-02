@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -6,21 +7,22 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zuff/pages/profile/petprofile.dart';
+import 'add_pet.dart';
 import 'menu.dart';
 
-class ProfileWidget extends StatefulWidget {
-  const ProfileWidget({super.key});
+class Profile extends StatefulWidget {
+  const Profile({super.key});
 
   @override
-  State<ProfileWidget> createState() => _ProfileWidgetState();
+  State<Profile> createState() => _ProfileWidgetState();
 }
 
-class _ProfileWidgetState extends State<ProfileWidget> {
+class _ProfileWidgetState extends State<Profile> {
   final ImagePicker _picker = ImagePicker();
   User? user = FirebaseAuth.instance.currentUser;
 
   List<String> userPhotos = [];
-  bool isLoadingPhotos = true;
+  bool isLoading = true;
 
   String name = 'unknown';
   String email = 'unknown';
@@ -29,23 +31,29 @@ class _ProfileWidgetState extends State<ProfileWidget> {
   User? currentUser;
 
   List<Map<String, dynamic>> userAnimals = [];
-  bool isLoadingAnimals = true;
 
   @override
   void initState() {
     super.initState();
-    _loadUserPhotos();
-    _loadUserInfo();
-    _loadUserAnimals();
+    _initializeProfileData();
+  }
+
+  Future<void> _initializeProfileData() async {
+    setState(() => isLoading = true);
+    await Future.wait([
+      _loadUserPhotos(),
+      _loadUserInfo(),
+      _loadUserAnimals(),
+    ]);
+    setState(() => isLoading = false);
   }
 
   Future<void> _pickAndUploadGalleryPhoto() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile == null) return;
+    if (pickedFile == null || user == null) return;
 
     final file = File(pickedFile.path);
-    final userId = user?.uid;
-    if (userId == null) return;
+    final userId = user!.uid;
 
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -54,7 +62,18 @@ class _ProfileWidgetState extends State<ProfileWidget> {
           .child('users/$userId/photos/image_$timestamp.jpg');
       await ref.putFile(file);
 
-      await _loadUserPhotos();
+      final downloadUrl = await ref.getDownloadURL();
+
+      // Update SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      List<String> existingPhotos = prefs.getStringList('userPhotos') ?? [];
+      existingPhotos.add(downloadUrl);
+      await prefs.setStringList('userPhotos', existingPhotos);
+
+      setState(() {
+        userPhotos = existingPhotos;
+      });
+
     } catch (e) {
       debugPrint('Error uploading image to gallery: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -62,88 +81,112 @@ class _ProfileWidgetState extends State<ProfileWidget> {
       );
     }
   }
-
   Future<void> _loadUserPhotos() async {
     if (user == null) return;
 
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
     try {
+      setState(() {
+        isLoading = true;
+      });
+
       final ref = FirebaseStorage.instance.ref().child('users/${user!.uid}/photos');
       final ListResult result = await ref.listAll();
 
-      final urls = await Future.wait(
-        result.items.map((item) => item.getDownloadURL()),
-      );
+      final urls = await Future.wait(result.items.map((item) => item.getDownloadURL()));
+
+      await prefs.setStringList('userPhotos', urls);
 
       setState(() {
         userPhotos = urls;
-        isLoadingPhotos = false;
+        isLoading = false;
       });
+
     } catch (e) {
       debugPrint('Error loading photos: $e');
+
+      // Fallback to SharedPreferences
+      List<String>? cachedUrls = prefs.getStringList('userPhotos');
+      if (cachedUrls != null) {
+        setState(() {
+          userPhotos = cachedUrls;
+        });
+      }
+
       setState(() {
-        isLoadingPhotos = false;
+        isLoading = false;
       });
     }
   }
-
   Future<void> _loadUserInfo() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     currentUser = FirebaseAuth.instance.currentUser;
 
-    if (currentUser != null) {
-      String? savedName = prefs.getString('name');
-      String? savedEmail = prefs.getString('email');
-      String? savedCreationDate = prefs.getString('creationDate');
+    if (currentUser == null) return;
 
-      if (savedName != null && savedEmail != null && savedCreationDate != null) {
+    setState(() {
+      isLoading = true;
+    });
+
+    String? savedName = prefs.getString('name');
+    String? savedEmail = prefs.getString('email');
+    String? savedCreationDate = prefs.getString('creationDate');
+
+    if (savedName != null && savedEmail != null && savedCreationDate != null) {
+      setState(() {
+        name = savedName;
+        email = savedEmail;
+        creationDate = savedCreationDate;
+      });
+    } else {
+      DocumentSnapshot userInfo = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.uid)
+          .get();
+
+      if (userInfo.exists) {
         setState(() {
-          name = savedName;
-          email = savedEmail;
-          creationDate = savedCreationDate;
+          name = userInfo['display_name'] ?? 'User123';
+          email = userInfo['email'] ?? 'john.doe@gmail.com';
+          creationDate = userInfo['created_time'] ?? '${DateTime.now()}';
         });
-      } else {
-        DocumentSnapshot userInfo = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser!.uid)
-            .get();
 
-        if (userInfo.exists) {
-          setState(() {
-            name = userInfo['display_name'] ?? 'User123';
-            email = userInfo['email'] ?? 'john.doe@gmail.com';
-            creationDate = userInfo['created_time'] ?? '${DateTime.now()}';
-          });
-
-          await prefs.setString('name', name);
-          await prefs.setString('email', email);
-          await prefs.setString('creationDate', creationDate);
-        }
+        await prefs.setString('name', name);
+        await prefs.setString('email', email);
+        await prefs.setString('creationDate', creationDate);
       }
     }
-  }
 
+    setState(() {
+      isLoading = false;
+    });
+  }
   Future<void> _pickAndUploadImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile == null) return;
+    if (pickedFile == null || user == null) return;
 
     final file = File(pickedFile.path);
-    final userId = user?.uid;
-    if (userId == null) return;
+    final userId = user!.uid;
 
     try {
       final ref = FirebaseStorage.instance.ref().child('users/$userId.jpg');
       await ref.putFile(file);
-
       final imageUrl = await ref.getDownloadURL();
 
       await user!.updatePhotoURL(imageUrl);
       await FirebaseAuth.instance.currentUser!.reload();
 
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('profileImageUrl', imageUrl);
+
       setState(() {
         user = FirebaseAuth.instance.currentUser;
+        isLoading = false;
       });
 
       await _loadUserPhotos();
+
     } catch (e) {
       debugPrint('Error uploading image: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -155,7 +198,11 @@ class _ProfileWidgetState extends State<ProfileWidget> {
   Future<void> _loadUserAnimals() async {
     if (user == null) return;
 
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
     try {
+      setState(() => isLoading = true);
+
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('pets')
           .where('Owner', isEqualTo: user!.uid)
@@ -164,20 +211,27 @@ class _ProfileWidgetState extends State<ProfileWidget> {
       final animals = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
-        print('Animal data: $data');
         return data;
       }).toList();
 
+      await prefs.setString('userAnimals', jsonEncode(animals));
 
       setState(() {
         userAnimals = animals;
-        isLoadingAnimals = false;
+        isLoading = false;
       });
+
     } catch (e) {
       debugPrint('Error loading animals: $e');
-      setState(() {
-        isLoadingAnimals = false;
-      });
+
+      // Load cached animals if available
+      final cached = prefs.getString('userAnimals');
+      if (cached != null) {
+        final decoded = List<Map<String, dynamic>>.from(jsonDecode(cached));
+        setState(() => userAnimals = decoded);
+      }
+
+      setState(() => isLoading = false);
     }
   }
 
@@ -189,7 +243,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
           radius: 50,
           backgroundImage: user?.photoURL != null
               ? NetworkImage(user!.photoURL!)
-              : const AssetImage('assets/default_avatar.png') as ImageProvider,
+              : const AssetImage('assets/default_profile.png') as ImageProvider,
         ),
         Positioned(
           bottom: 0,
@@ -198,7 +252,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
             onTap: _pickAndUploadImage,
             child: Container(
               padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.teal,
                 shape: BoxShape.circle,
               ),
@@ -234,7 +288,9 @@ class _ProfileWidgetState extends State<ProfileWidget> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
         child: Column(
           children: [
             const SizedBox(height: 20),
@@ -245,18 +301,13 @@ class _ProfileWidgetState extends State<ProfileWidget> {
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text(
-              email,
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-            const SizedBox(height: 8),
             const Text(
-              'Bio curta ou status aqui...',
+              'No Bio...',
               style: TextStyle(fontSize: 14, color: Colors.black54),
             ),
             const SizedBox(height: 40),
             SizedBox(
-              height: 160,
+              height: 152,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -281,7 +332,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                       padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 4.0),
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        itemCount: userAnimals.length + 1, // +1 for the add pet button
+                        itemCount: userAnimals.length + 1,
                         itemBuilder: (context, index) {
                           // Add Pet button at the END
                           if (index == userAnimals.length) {
@@ -289,7 +340,10 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                               padding: const EdgeInsets.only(right: 16),
                               child: GestureDetector(
                                 onTap: () {
-                                  // TODO: Navigate to Add Animal page
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const AddPetPage()),
+                                  );
                                 },
                                 child: const Column(
                                   children: [
@@ -383,27 +437,24 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: const Divider(thickness: 1, height: 1, color: Colors.grey,),
+            ),
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SizedBox(
                 height: 300,
-                child: isLoadingPhotos
+                child: isLoading
                     ? const Center(child: CircularProgressIndicator())
-                    : userPhotos.isEmpty
-                    ? const Center(child: Text('Nenhuma foto enviada ainda.'))
                     : GridView.count(
                   crossAxisCount: 3,
                   mainAxisSpacing: 8,
                   crossAxisSpacing: 8,
                   physics: const NeverScrollableScrollPhysics(),
                   children: [
-                    ...userPhotos.map((url) {
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(url, fit: BoxFit.cover),
-                      );
-                    }).toList(),
+                    // Always include the "+" square first
                     GestureDetector(
                       onTap: _pickAndUploadGalleryPhoto,
                       child: Container(
@@ -414,6 +465,16 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                         child: const Icon(Icons.add, size: 40, color: Colors.black54),
                       ),
                     ),
+                    // Then display the photos (if any)
+                    ...userPhotos.map((url) {
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          url,
+                          fit: BoxFit.cover,
+                        ),
+                      );
+                    }),
                   ],
                 ),
               ),

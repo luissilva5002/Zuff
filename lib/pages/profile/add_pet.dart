@@ -5,7 +5,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:zuff/pages/profile/profile.dart';
 
+import '../../home.dart';
 
 class AddPetPage extends StatefulWidget {
   const AddPetPage({super.key});
@@ -21,6 +23,7 @@ class _AddPetPageState extends State<AddPetPage> {
   final TextEditingController _speciesController = TextEditingController();
   final TextEditingController _breedController = TextEditingController();
   final TextEditingController _birthDateController = TextEditingController();
+  final TextEditingController _districtController = TextEditingController();
   String? _selectedDistrict;
   bool _isVaccinated = false;
   File? _imageFile;
@@ -49,7 +52,6 @@ class _AddPetPageState extends State<AddPetPage> {
       });
     }
   }
-
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -60,15 +62,14 @@ class _AddPetPageState extends State<AddPetPage> {
     try {
       String? imagePath;
       if (_imageFile != null) {
-        // Create a file name using the pet's name
         final fileName = '${_nameController.text.replaceAll(' ', '_').toLowerCase()}.jpg';
         final ref = FirebaseStorage.instance.ref().child('pets/$fileName');
         await ref.putFile(_imageFile!);
-        imagePath = 'pets/$fileName'; // Save the file path
+        imagePath = 'pets/$fileName';
       }
 
       await FirebaseFirestore.instance.collection('pets').add({
-        'Adoption': false, // Verify later
+        'Adoption': false,
         'Name': _nameController.text,
         'Age': int.tryParse(_ageController.text) ?? 0,
         'Species': _speciesController.text,
@@ -76,7 +77,7 @@ class _AddPetPageState extends State<AddPetPage> {
         'District': _selectedDistrict,
         'Vaccinated': _isVaccinated,
         'BirthDate': _birthDateController.text,
-        'Image': imagePath ?? '', // Save the file path
+        'Image': imagePath ?? '',
         'Owner': userId,
       });
 
@@ -84,7 +85,33 @@ class _AddPetPageState extends State<AddPetPage> {
         const SnackBar(content: Text('Pet added successfully!')),
       );
 
-      Navigator.pop(context);
+      // Navigate to Home
+      if (FirebaseAuth.instance.currentUser != null) {
+        // If the user is authenticated, go to Home page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Home()),
+        );
+
+        // Navigate to Profile after going to Home
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Profile()),
+        );
+
+        // Clear the stack and go to Profile, this will remove Home from the stack
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const Profile()),
+              (Route<dynamic> route) => false, // Removes all the previous routes
+        );
+      } else {
+        // If the user is not authenticated, go to Profile page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Profile()),
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
@@ -107,112 +134,125 @@ class _AddPetPageState extends State<AddPetPage> {
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: ClipOval(
-                    child: Container(
-                      height: 120,
-                      width: 120,
-                      color: Colors.grey[300],
-                      child: _imageFile == null
-                          ? const Icon(Icons.add_a_photo, size: 40, color: Colors.black54)
-                          : Image.file(_imageFile!, fit: BoxFit.cover),
+            child: Center(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: ClipOval(
+                      child: Container(
+                        height: 120,
+                        width: 120,
+                        color: Colors.grey[300],
+                        child: _imageFile == null
+                            ? const Icon(Icons.add_a_photo, size: 40, color: Colors.black54)
+                            : Image.file(_imageFile!, fit: BoxFit.cover),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the pet\'s name';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _ageController,
-                  decoration: const InputDecoration(labelText: 'Age'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the pet\'s age';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _speciesController,
-                  decoration: const InputDecoration(labelText: 'Species'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the pet\'s species';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _breedController,
-                  decoration: const InputDecoration(labelText: 'Breed'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the pet\'s breed';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: TextEditingController(text: _selectedDistrict),
-                  decoration: const InputDecoration(labelText: 'District'),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedDistrict = value;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a district';
-                    }
-                    return null;
-                  },
-                ),
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _isVaccinated,
-                      onChanged: (value) {
-                        setState(() {
-                          _isVaccinated = value!;
-                        });
-                      },
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(labelText: 'Pet Name'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the pet\'s name';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _ageController,
+                    decoration: const InputDecoration(labelText: 'Age'),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the pet\'s age';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _speciesController,
+                    decoration: const InputDecoration(labelText: 'Species'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the pet\'s species';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _breedController,
+                    decoration: const InputDecoration(labelText: 'Breed'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the pet\'s breed';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _districtController,
+                    decoration: const InputDecoration(labelText: 'District'),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedDistrict = value;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a district';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Checkbox(
+                        value: _isVaccinated,
+                        onChanged: (value) {
+                          setState(() {
+                            _isVaccinated = value!;
+                          });
+                        },
+                      ),
+                      const Text('Vaccinated'),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _birthDateController,
+                    readOnly: true,
+                    decoration: const InputDecoration(labelText: 'Birth Date'),
+                    onTap: _pickBirthDate,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a birth date';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : ElevatedButton(
+                    onPressed: _submitForm,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 15.0),
+                      textStyle: const TextStyle(fontSize: 16),
                     ),
-                    const Text('Vaccinated'),
-                  ],
-                ),
-                TextFormField(
-                  controller: _birthDateController,
-                  readOnly: true,
-                  decoration: const InputDecoration(labelText: 'Birth Date'),
-                  onTap: _pickBirthDate,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select a birth date';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : ElevatedButton(
-                  onPressed: _submitForm,
-                  child: const Text('Add Pet'),
-                ),
-              ],
+                    child: const Text('Add Pet'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

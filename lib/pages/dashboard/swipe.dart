@@ -158,7 +158,6 @@ class _PetSwipeState extends State<PetSwipe> {
     });
   }
 
-
   Future<String> getImageUrl(String imagePath) async {
     try {
       Reference ref = FirebaseStorage.instance.ref().child(imagePath);
@@ -331,8 +330,6 @@ class _PetSwipeState extends State<PetSwipe> {
         ),
       );
     }
-
-
 
   @override
   Widget build(BuildContext context) {
