@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
@@ -8,12 +9,14 @@ class Pet {
   final String location;
   final int age;
   final String imagePath; // Use path of the image in Firebase Storage
+  final String ownerId;
 
   Pet({
     required this.name,
     required this.location,
     required this.age,
     required this.imagePath,
+    required this.ownerId,
   });
 }
 
@@ -45,6 +48,7 @@ class _PetSwipeState extends State<PetSwipe> {
             location: doc['Location'],
             age: doc['Age'],
             imagePath: doc['Image'],
+            ownerId: doc['Owner'],
           );
         }).toList();
       });
@@ -53,8 +57,56 @@ class _PetSwipeState extends State<PetSwipe> {
     }
   }
 
-  void accept(Pet pet) {
-    print("Accepted ${pet.name}");
+  void accept(Pet pet) async {
+
+    String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    String shelterUserId = pet.ownerId;
+
+    // Step 1: Check if conversation exists
+    QuerySnapshot existing = await FirebaseFirestore.instance
+        .collection('conversations')
+        .where('participants', arrayContains: currentUserId)
+        .get();
+
+    DocumentSnapshot? existingConversation;
+    for (var doc in existing.docs) {
+      List participants = doc['participants'];
+      if (participants.contains(shelterUserId)) {
+        existingConversation = doc;
+        break;
+      }
+    }
+
+    DocumentReference conversationRef;
+
+    if (existingConversation != null) {
+      // Use existing conversation
+      conversationRef = existingConversation.reference;
+    } else {
+      // Create new conversation
+      conversationRef = await FirebaseFirestore.instance.collection('conversations').add({
+        'participants': [currentUserId, shelterUserId],
+        'lastMessage': '',
+        'lastMessageTimestamp': FieldValue.serverTimestamp(),
+      });
+    }
+
+    // Step 2: Send automatic message
+    await FirebaseFirestore.instance
+        .collection('conversations')
+        .doc(conversationRef.id)
+        .collection('messages')
+        .add({
+      'senderId': currentUserId,
+      'text': "Hi! I'm interested in adopting ${pet.name}.",
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    // Step 3: Update conversation preview
+    await conversationRef.update({
+      'lastMessage': "Hi! I'm interested in adopting ${pet.name}.",
+      'lastMessageTimestamp': FieldValue.serverTimestamp(),
+    });
   }
 
   void reject(Pet pet) {

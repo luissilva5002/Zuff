@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -12,7 +13,7 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  final String currentUserId = "user1";
+  final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
   final TextEditingController _controller = TextEditingController();
 
   String otherUserName = 'Loading...';
