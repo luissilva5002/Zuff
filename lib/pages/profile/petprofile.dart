@@ -77,11 +77,11 @@ class PetProfilePage extends StatelessWidget {
                   SizedBox(height: 16),
                   Text(
                     'Born on: $birthDate\nOwner: $owner',
-                    style: TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16),
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
                   Divider(),
-                  Text(
+                  const Text(
                     'Adoption Tips',
                     style: TextStyle(
                         fontSize: 18,

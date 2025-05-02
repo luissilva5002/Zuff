@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
-// Pet model definition (imageUrl removed)
 class Pet {
+  final String id;
   final String name;
   final String location;
   final int age;
@@ -19,11 +20,12 @@ class Pet {
     required this.location,
     required this.age,
     required this.imagePath,
-    this.species,
-    this.breed,
-    this.vaccinated,
-    this.birthDate,
-    this.owner,
+    required this.species,
+    required this.breed,
+    required this.vaccinated,
+    required this.birthDate,
+    required this.owner,
+    required this.id,
   });
 }
 
@@ -46,40 +48,116 @@ class _PetSwipeState extends State<PetSwipe> {
 
   Future<void> fetchPets() async {
     try {
+      String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
+      // Step 1: Get the user's accepted and rejected lists
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUserId)
+          .get();
+
+      List<dynamic> accepted = userDoc['accepted'] ?? [];
+      List<dynamic> rejected = userDoc['rejected'] ?? [];
+
+      // Combine the two lists into a Set for fast lookup
+      Set<String> excludedPetIds = {...accepted.map((e) => e.toString()), ...rejected.map((e) => e.toString())};
+
+      // Step 2: Fetch all pets with Adoption = true
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('pets')
           .where('Adoption', isEqualTo: true)
           .get();
 
-      setState(() {
-        _pets = querySnapshot.docs.map((doc) {
-          final data = doc.data() as Map<String, dynamic>;
+      // Step 3: Filter out pets that are in accepted or rejected
+      List<Pet> filteredPets = querySnapshot.docs.where((doc) {
+        return !excludedPetIds.contains(doc.id);
+      }).map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
 
-          return Pet(
-            name: data['Name'] ?? 'Unknown',
-            location: data['Location'] ?? 'Unknown',
-            age: data['Age'] ?? 'Unknown',
-            imagePath: data['Image'] ?? '',
-            species: data['Species'],
-            breed: data['Breed'],
-            vaccinated: data['Vaccinated'],
-            birthDate: data['BirthDate'],
-            owner: data['Owner'],
-          );
-        }).toList();
+        return Pet(
+          id: doc.id,
+          name: data['Name'] ?? 'Unknown',
+          location: data['Location'] ?? 'Unknown',
+          age: data['Age'] ?? 'Unknown',
+          imagePath: data['Image'] ?? '',
+          species: data['Species'],
+          breed: data['Breed'],
+          owner: data['Owner'],
+          vaccinated: data['Vaccinated'],
+          birthDate: data['BirthDate'],
+        );
+      }).toList();
+
+      // Step 4: Set state with filtered pets
+      setState(() {
+        _pets = filteredPets;
       });
     } catch (e) {
       print("Error fetching pets: $e");
     }
   }
 
-  void accept(Pet pet) {
+  Future<void> accept(Pet pet) async {
     print("Accepted ${pet.name}");
+
+    String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    String? shelterUserId = pet.owner;
+
+    // Add pet document ID to "accepted"
+    await FirebaseFirestore.instance.collection('users').doc(currentUserId).update({
+      'accepted': FieldValue.arrayUnion([pet.id]),
+    });
+
+    // Check if conversation exists
+    QuerySnapshot existing = await FirebaseFirestore.instance
+        .collection('conversations')
+        .where('participants', arrayContains: currentUserId)
+        .get();
+
+    DocumentSnapshot? existingConversation;
+    for (var doc in existing.docs) {
+      List participants = doc['participants'];
+      if (participants.contains(shelterUserId)) {
+        existingConversation = doc;
+        break;
+      }
+    }
+
+    DocumentReference conversationRef;
+
+    if (existingConversation != null) {
+      conversationRef = existingConversation.reference;
+    } else {
+      conversationRef = await FirebaseFirestore.instance.collection('conversations').add({
+        'participants': [currentUserId, shelterUserId],
+        'lastMessage': '',
+        'lastMessageTimestamp': FieldValue.serverTimestamp(),
+      });
+    }
+
+    await conversationRef.collection('messages').add({
+      'senderId': currentUserId,
+      'text': "Hi! I'm interested in adopting ${pet.name}.",
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    await conversationRef.update({
+      'lastMessage': "Hi! I'm interested in adopting ${pet.name}.",
+      'lastMessageTimestamp': FieldValue.serverTimestamp(),
+    });
   }
 
-  void reject(Pet pet) {
+  Future<void> reject(Pet pet) async {
     print("Rejected ${pet.name}");
+
+    String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
+    // Add pet document ID to "rejected"
+    await FirebaseFirestore.instance.collection('users').doc(currentUserId).update({
+      'rejected': FieldValue.arrayUnion([pet.id]),
+    });
   }
+
 
   Future<String> getImageUrl(String imagePath) async {
     try {
@@ -154,62 +232,72 @@ class _PetSwipeState extends State<PetSwipe> {
     );
   }
 
-    Widget _buildFront(Pet pet) {
-      return Container(
-        key: const ValueKey('front'),
-        width: double.infinity, // Full width
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            SizedBox(
-              child: FutureBuilder<String>(
-                future: getImageUrl(pet.imagePath),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError || !snapshot.hasData ||
-                      snapshot.data!.isEmpty) {
-                    return const Center(child: Icon(Icons.error));
-                  } else {
-                    return Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.network(
-                          snapshot.data!,
-                          width: double.infinity,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    );
-                  }
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    pet.name,
-                    style: const TextStyle(
-                        fontSize: 28, fontWeight: FontWeight.bold),
+  Widget _buildFront(Pet pet) {
+    return Container(
+      key: const ValueKey('front'),
+      width: double.infinity,
+      height: double.infinity, // Required to calculate available vertical space
+      child: Column(
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center, // Center image vertically in available space
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: FutureBuilder<String>(
+                    future: getImageUrl(pet.imagePath),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const CircularProgressIndicator();
+                      } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Icon(Icons.error);
+                      } else {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.network(
+                            snapshot.data!,
+                            height: MediaQuery
+                                .of(context)
+                                .size
+                                .height * 0.55,
+                            fit: BoxFit.contain,
+                          ),
+                        );
+                      }
+                    },
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${pet.age} years old · ${pet.location}',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      );
-    }
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  pet.name,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${pet.age} years old · ${pet.location}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, color: Colors.grey[700]),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-    Widget _buildBack(Pet pet) {
+
+
+  Widget _buildBack(Pet pet) {
       return Container(
         key: const ValueKey('back'),
         width: double.infinity, // Full width
