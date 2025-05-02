@@ -46,7 +46,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF94a9a7),
+              Color(0xFF009688),
               Color(0xFF94a9a7),
             ],
             begin: Alignment.topLeft,
@@ -110,7 +110,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             child: ElevatedButton(
                               onPressed: resetPassword,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
+                                backgroundColor: Color(0xFF009688),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -133,7 +133,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                   text: 'here',
                                   style: const TextStyle(
                                     decoration: TextDecoration.underline,
-                                    color: Colors.blue,
+                                    color: Color(0xFF009688),
                                   ),
                                 ),
                               ],
