@@ -82,7 +82,7 @@ class EventDetailPage extends StatelessWidget {
               icon: const Icon(Icons.open_in_browser),
               label: const Text("Visit Event Website"),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
+                backgroundColor: const Color(0xFF94a9a7),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               ),
             ),
@@ -148,7 +148,7 @@ class EventsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Upcoming Pet Events"),
-        backgroundColor: Colors.green,
+        backgroundColor: Color(0xFF94a9a7),
       ),
       body: StreamBuilder<List<Event>>(
         stream: getUpcomingEvents(),

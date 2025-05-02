@@ -46,11 +46,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF011526), // Dark blue
-              Color(0xFF012E40), // Teal blue
-              Color(0xFF025959), // Greenish blue
-              Color(0xFF02735E),
-              Color(0xFF038C65)// Vibrant green
+              Color(0xFF94a9a7),
+              Color(0xFF94a9a7),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -64,8 +61,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   const Text(
-                    'UniGreen',
-                    style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
+                    'Zuff',
+                    style: TextStyle(color: Colors.white, fontSize: 80, fontWeight: FontWeight.bold, fontFamily: 'RobotoSlab',),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 50),
