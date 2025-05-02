@@ -4,7 +4,6 @@ import 'package:zuff/pages/dashboard/dashboard.dart';
 import 'package:zuff/pages/events/events.dart';
 import 'package:zuff/pages/profile/profile.dart';
 
-
 class Home extends StatefulWidget {
   final int? selectedIndex;
 
@@ -35,7 +34,7 @@ class _HomeState extends State<Home> {
       Dashboard(),
       DMPage(),
       EventsPage(),
-      ProfileWidget(),
+      ProfilePage() // para teste da pagina
     ];
 
     return Scaffold(

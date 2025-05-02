@@ -11,8 +11,8 @@ final List<String> userPhotos = [
   'https://via.placeholder.com/200',
 ];
 
-class ProfileWidget extends StatelessWidget {
-  const ProfileWidget({super.key});
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
