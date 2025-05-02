@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:zuff/pages/profile/profile.dart';
-
 import '../../home.dart';
 
 class AddPetPage extends StatefulWidget {
@@ -241,15 +240,16 @@ class _AddPetPageState extends State<AddPetPage> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : ElevatedButton(
-                    onPressed: _submitForm,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 15.0),
-                      textStyle: const TextStyle(fontSize: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _submitForm,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 15.0),
+                        textStyle: const TextStyle(fontSize: 16),
+                      ),
+                      child: const Text('Add Pet'),
                     ),
-                    child: const Text('Add Pet'),
                   ),
                 ],
               ),
