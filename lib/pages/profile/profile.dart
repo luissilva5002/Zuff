@@ -11,8 +11,10 @@ import 'package:zuff/pages/profile/surelogout.dart';
 import '../../providers/themeprovider.dart';
 import '../../theme/theme.dart';
 import 'edit_profile.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 
+//para testing
 final List<String> userPhotos = [
   'https://via.placeholder.com/150',
   'https://via.placeholder.com/160',
@@ -43,11 +45,15 @@ class _ProfileWidgetState extends State<ProfileWidget> {
 
   User? currentUser;
 
+  List<Map<String, dynamic>> userAnimals = [];
+  bool isLoadingAnimals = true;
+
   @override
   void initState() {
     super.initState();
     _loadUserPhotos();
     _loadUserInfo();
+    _loadUserAnimals();
   }
 
   Future<void> _pickAndUploadGalleryPhoto() async {
@@ -166,6 +172,29 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     }
   }
 
+  Future<void> _loadUserAnimals() async {
+    if (user == null) return;
+
+    try {
+      final QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('pets') // Replace with your collection name
+          .where('Owner', isEqualTo: user!.uid)
+          .get();
+
+      final animals = snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+
+      setState(() {
+        userAnimals = animals;
+        isLoadingAnimals = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading animals: $e');
+      setState(() {
+        isLoadingAnimals = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -223,21 +252,57 @@ class _ProfileWidgetState extends State<ProfileWidget> {
               style: TextStyle(fontSize: 14, color: Colors.black54),
             ),
             const SizedBox(height: 40),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Minhas Fotos',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.add, color: Colors.blue),
-                    onPressed: _pickAndUploadGalleryPhoto,
-                    tooltip: 'Adicionar foto',
-                  ),
-                ],
+            SizedBox(
+              height: 120, // Altura ajustada para caber a lista de animais
+              child: isLoadingAnimals
+                  ? const Center(
+                child: CircularProgressIndicator(), // Apenas um indicador centralizado
+              )
+                  : userAnimals.isEmpty
+                  ? const Center(
+                child: Text(
+                  'No pets found.',
+                  textAlign: TextAlign.center,
+                ),
+              )
+                  : ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: userAnimals.length,
+                itemBuilder: (context, index) {
+                  final animal = userAnimals[index];
+                  return FutureBuilder<String>(
+                    future: FirebaseStorage.instance
+                        .ref(animal['Image']) // Caminho para a imagem no Firebase Storage
+                        .getDownloadURL(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const SizedBox(); // Evita múltiplos indicadores
+                      } else if (snapshot.hasError) {
+                        return const Icon(Icons.error, color: Colors.red);
+                      } else if (!snapshot.hasData) {
+                        return const Icon(Icons.broken_image, color: Colors.grey);
+                      }
+
+                      final imageUrl = snapshot.data!;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 35,
+                              backgroundImage: NetworkImage(imageUrl),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              animal['Name'] ?? 'Unknown',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
             const SizedBox(height: 12),
