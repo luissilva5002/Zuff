@@ -18,11 +18,13 @@ class _ChatPageState extends State<ChatPage> {
   final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
   final TextEditingController _controller = TextEditingController();
 
+  String? conversationId;
   String otherUserName = 'Loading...';
 
   @override
   void initState() {
     super.initState();
+    conversationId = widget.conversationId;
     fetchOtherUserName();
   }
 
@@ -51,38 +53,58 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  Stream<QuerySnapshot> getMessages() {
+  Stream<QuerySnapshot>? getMessages() {
+    if (conversationId == null) return null;
     return FirebaseFirestore.instance
         .collection('conversations')
-        .doc(widget.conversationId)
+        .doc(conversationId)
         .collection('messages')
         .orderBy('timestamp', descending: true)
         .snapshots();
   }
 
-  void sendMessage() async {
+  Future<void> sendMessage() async {
     if (_controller.text.trim().isEmpty) return;
 
     String text = _controller.text.trim();
     _controller.clear();
 
-    var message = {
-      'senderId': currentUserId,
-      'text': text,
-      'timestamp': FieldValue.serverTimestamp(),
-    };
+    if (conversationId == null) {
+      // Create new conversation
+      DocumentReference conversationRef = await FirebaseFirestore.instance
+          .collection('conversations')
+          .add({
+        'participants': [currentUserId, widget.otherUserId],
+        'lastMessage': text,
+        'lastMessageTimestamp': FieldValue.serverTimestamp(),
+      });
 
-    var conversationRef = FirebaseFirestore.instance
-        .collection('conversations')
-        .doc(widget.conversationId);
+      setState(() {
+        conversationId = conversationRef.id;
+      });
 
-    await conversationRef.collection('messages').add(message);
+      await conversationRef.collection('messages').add({
+        'senderId': currentUserId,
+        'text': text,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } else {
+      // Add to existing conversation
+      var conversationRef = FirebaseFirestore.instance
+          .collection('conversations')
+          .doc(conversationId);
 
-    // Update lastMessage info
-    await conversationRef.update({
-      'lastMessage': text,
-      'lastMessageTimestamp': FieldValue.serverTimestamp(),
-    });
+      await conversationRef.collection('messages').add({
+        'senderId': currentUserId,
+        'text': text,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      await conversationRef.update({
+        'lastMessage': text,
+        'lastMessageTimestamp': FieldValue.serverTimestamp(),
+      });
+    }
   }
 
   @override
@@ -109,7 +131,9 @@ class _ChatPageState extends State<ChatPage> {
       body: Column(
         children: [
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
+            child: conversationId == null
+                ? Center(child: Text('No messages yet. Say hi!'))
+                : StreamBuilder<QuerySnapshot>(
               stream: getMessages(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
