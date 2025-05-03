@@ -56,7 +56,6 @@ class PetProfilePage extends StatelessWidget {
           final String species = petData['Species'] ?? 'Unknown';
           final String breed = petData['Breed'] ?? 'Unknown';
           final String location = petData['Location'] ?? 'Unknown';
-          final String gender = petData['gender'] ?? 'Unknown';
           final bool vaccinated = petData['Vaccinated'] ?? false;
           final String birthDate = petData['BirthDate'] ?? 'Unknown';
           final String ownerId = petData['Owner'] ?? 'Unknown';
@@ -112,14 +111,6 @@ class PetProfilePage extends StatelessWidget {
                           const Icon(Icons.pets, size: 16),
                           const SizedBox(width: 6),
                           Text('$species • $breed'),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(Icons.error, size: 16),
-                          const SizedBox(width: 6),
-                          Text(gender),
                         ],
                       ),
                       const SizedBox(height: 4),

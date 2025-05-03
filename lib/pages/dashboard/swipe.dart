@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:zuff/services/age.dart';
 
 import '../../home.dart';
 
@@ -41,18 +42,18 @@ class _PetSwipeState extends State<PetSwipe> {
   int currentPetIndex = 0;
   List<Pet> _pets = []; // List to store fetched pets
   bool _showBack = false;
+  final ageService = Age();
 
   @override
   void initState() {
     super.initState();
-    fetchPets(); // Fetch pet data from Firestore when widget is initialized
+    fetchPets();
   }
 
   Future<void> fetchPets() async {
     try {
       String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
-      // Step 1: Get the user's accepted and rejected lists
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(currentUserId)
@@ -61,41 +62,71 @@ class _PetSwipeState extends State<PetSwipe> {
       List<dynamic> accepted = userDoc['accepted'] ?? [];
       List<dynamic> rejected = userDoc['rejected'] ?? [];
 
-      // Combine the two lists into a Set for fast lookup
-      Set<String> excludedPetIds = {...accepted.map((e) => e.toString()), ...rejected.map((e) => e.toString())};
+      Set<String> excludedPetIds = {
+        ...accepted.map((e) => e.toString()),
+        ...rejected.map((e) => e.toString())
+      };
 
-      // Step 2: Fetch all pets with Adoption = true
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('pets')
           .where('Adoption', isEqualTo: true)
           .get();
 
-      // Step 3: Filter out pets that are in accepted or rejected
-      List<Pet> filteredPets = querySnapshot.docs.where((doc) {
-        return !excludedPetIds.contains(doc.id);
-      }).map((doc) {
+      List<Pet> filteredPets = [];
+
+      for (var doc in querySnapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
 
-        return Pet(
+        // Only process pets that are not in accepted or rejected lists
+        if (excludedPetIds.contains(doc.id)) {
+          continue;
+        }
+
+        final birthDateStr = data['BirthDate'] ?? '';
+        final int age = ageService.calculateAge(birthDateStr);
+
+        // Fetch the owner's name based on the 'owner' field (owner is an ID)
+        String ownerName = 'Unknown';
+        if (data['Owner'] != null) {
+          String ownerId = data['Owner'];
+
+          try {
+            DocumentSnapshot ownerDoc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(ownerId)
+                .get();
+
+            if (ownerDoc.exists && ownerDoc.data() != null) {
+              ownerName = ownerDoc['display_name'] ?? 'Unknown';
+            } else {
+              print('Owner document does not exist or has no data for ownerId: $ownerId');
+            }
+          } catch (e) {
+            print('Error fetching owner name: $e');
+          }
+        } else {
+          print('No owner ID found for pet: ${doc.id}');
+        }
+
+        filteredPets.add(Pet(
           id: doc.id,
           name: data['Name'] ?? 'Unknown',
-          location: data['Location'] ?? 'Unknown',
-          age: data['Age'] ?? 'Unknown',
+          location: data['District'] ?? 'Unknown', // Changed from Location to District
           imagePath: data['Image'] ?? '',
           species: data['Species'],
           breed: data['Breed'],
-          owner: data['Owner'],
+          owner: ownerName,  // Now passing the owner's name fetched from users collection
           vaccinated: data['Vaccinated'],
-          birthDate: data['BirthDate'],
-        );
-      }).toList();
+          birthDate: birthDateStr,
+          age: age,
+        ));
+      }
 
-      // Step 4: Set state with filtered pets
       setState(() {
         _pets = filteredPets;
       });
     } catch (e) {
-      print("Error fetching pets: $e");
+      print('Error fetching pets: $e');
     }
   }
 
@@ -168,6 +199,25 @@ class _PetSwipeState extends State<PetSwipe> {
     } catch (e) {
       print("Error fetching image: $e");
       return "";
+    }
+  }
+
+  Future<String> fetchOtherUserName(String ownerId) async {
+    try {
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(ownerId)
+          .get();
+
+      if (doc.exists) {
+        var data = doc.data() as Map<String, dynamic>;
+        return data['display_name'] ?? 'Unknown';
+      } else {
+        return 'Unknown';
+      }
+    } catch (e) {
+      print('Error fetching user name: $e');
+      return 'Unknown';
     }
   }
 
@@ -358,43 +408,67 @@ class _PetSwipeState extends State<PetSwipe> {
       ),
     );
   }
-
-
-
   Widget _buildBack(Pet pet) {
-      return Container(
-        key: const ValueKey('back'),
-        width: double.infinity, // Full width
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Name: ${pet.name}'),
-                Text('Age: ${pet.age}'),
-                Text('Location: ${pet.location}'),
-                Text('Species: ${pet.species ?? "Unknown"}'),
-                Text('Breed: ${pet.breed ?? "Unknown"}'),
-                Text('Vaccinated: ${pet.vaccinated == true ? "Yes" : "No"}'),
-                Text('Birth Date: ${pet.birthDate ?? "Unknown"}'),
-                Text('Owner: ${pet.owner ?? "Unknown"}'),
-                const SizedBox(height: 10),
-                const Text(
-                  'Adoption Tips:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const Text(
-                  '• Ensure a safe and stable home\n'
-                      '• Budget for vet care and food\n'
-                      '• Plan time for daily care and bonding',
-                ),
-              ],
-            ),
+    return Container(
+      key: const ValueKey('back'),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min, // Needed for vertical centering
+            crossAxisAlignment: CrossAxisAlignment.start, // Text aligned to the left
+            children: [
+              _infoRow(Icons.pets, 'Name', pet.name),
+              _infoRow(Icons.calendar_today, 'Age', pet.age.toString()),
+              _infoRow(Icons.location_on, 'Location', pet.location),
+              _infoRow(Icons.category, 'Species', pet.species ?? 'Unknown'),
+              _infoRow(Icons.pets_outlined, 'Breed', pet.breed ?? 'Unknown'),
+              _infoRow(Icons.health_and_safety, 'Vaccinated', pet.vaccinated == true ? 'Yes' : 'No'),
+              _infoRow(Icons.cake, 'Birth Date', pet.birthDate ?? 'Unknown'),
+              _infoRow(Icons.person, 'Owner', pet.owner ?? 'Unknown'),
+            ],
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: Colors.teal, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: RichText(
+              textAlign: TextAlign.left,
+              text: TextSpan(
+                style: const TextStyle(color: Colors.black87, fontSize: 14),
+                children: [
+                  TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  TextSpan(text: value),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

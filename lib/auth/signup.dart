@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:zuff/auth/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:zuff/home.dart';
 import 'package:zuff/main.dart';
 import '../utils.dart';
 
@@ -71,17 +72,20 @@ class _SignUpPageState extends State<SignUpPage> {
         password: passwordController.text.trim(),
       );
 
-      // Now the user is created, so upload info
       await uploadInfo();
 
-      // Close the loading dialog
-      Navigator.of(context).pop();
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
 
-      // Navigate to the first screen
-      navigatorKey.currentState!.popUntil((route) => route.isFirst);
+      Navigator.of(context, rootNavigator: true).pushReplacement(
+        MaterialPageRoute(builder: (context) => const Home()), // Replace with your home screen
+      );
+
     } on FirebaseAuthException catch (e) {
-      Utils.showSnackBar(e.message);
-      Navigator.of(context).pop();
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop(); // Close loading dialog
+        Utils.showSnackBar(e.message);
+      }
     }
   }
 
