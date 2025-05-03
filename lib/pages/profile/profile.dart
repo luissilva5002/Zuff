@@ -98,6 +98,7 @@ class _ProfileWidgetState extends State<Profile> {
       });
     }
   }
+
   Future<void> _loadUserInfo() async {
     currentUser = FirebaseAuth.instance.currentUser;
 

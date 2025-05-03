@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:zuff/services/age.dart';
 
 class PetProfilePage extends StatelessWidget {
   final String id;
@@ -52,7 +53,6 @@ class PetProfilePage extends StatelessWidget {
 
           final petData = snapshot.data!;
           final String name = petData['Name'] ?? 'Unknown';
-          final int age = petData['Age'] ?? 'Unknown';
           final String species = petData['Species'] ?? 'Unknown';
           final String breed = petData['Breed'] ?? 'Unknown';
           final String location = petData['Location'] ?? 'Unknown';
@@ -61,6 +61,10 @@ class PetProfilePage extends StatelessWidget {
           final String birthDate = petData['BirthDate'] ?? 'Unknown';
           final String ownerId = petData['Owner'] ?? 'Unknown';
           final String imagePath = petData['Image'] ?? '';
+          final bool isForAdoption = petData['Adoption'] ?? false;
+
+          final ageService = Age();
+          int age = ageService.calculateAge(birthDate);
 
           return SingleChildScrollView(
             child: Column(
@@ -98,7 +102,7 @@ class PetProfilePage extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            '$name, $age',
+                            '$name, $age' + 'years old',
                             style: const TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
@@ -138,6 +142,16 @@ class PetProfilePage extends StatelessWidget {
                           Text(vaccinated ? "Vaccinated" : "Not vaccinated"),
                         ],
                       ),
+
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.check_circle, size: 16),
+                          const SizedBox(width: 6),
+                          Text(isForAdoption ? "For adoption" : "Not for adoption"),
+                        ],
+                      ),
+
                       const SizedBox(height: 16),
                       FutureBuilder<String>(
                         future: _getOwnerName(ownerId),
