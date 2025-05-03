@@ -209,6 +209,38 @@ class _ProfileDisplayState extends State<ProfileDisplay> {
                       ),
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Divider(thickness: 2, height: 2, color: Theme.of(context).colorScheme.tertiary),
+                  ),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: SizedBox(
+                      height: 300,
+                      child: isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : GridView.count(
+                        crossAxisCount: 3,
+                        mainAxisSpacing: 8,
+                        crossAxisSpacing: 8,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          ...userPhotos.map((url) {
+                            return GestureDetector(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  url,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                      ),
+                    ),
+                  )
                 ],
               ),
             ),
