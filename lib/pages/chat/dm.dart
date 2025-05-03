@@ -56,13 +56,13 @@ class _UserSearchPageState extends State<UserSearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Search Users')),
+      appBar: AppBar(title: const Text('Search Users')),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Search by name',
                 border: OutlineInputBorder(),
               ),
@@ -92,32 +92,42 @@ class _UserSearchPageState extends State<UserSearchPage> {
                         backgroundImage: imageProvider,
                       ),
                       title: Text(user['display_name']),
-                      onTap: () async {
-                        final existingConversation = await FirebaseFirestore.instance
-                            .collection('conversations')
-                            .where('participants', arrayContains: widget.currentUserId)
-                            .get();
+                        onTap: () async {
+                          final existingConversation = await FirebaseFirestore.instance
+                              .collection('conversations')
+                              .where('participants', arrayContains: widget.currentUserId)
+                              .get();
 
-                        String? matchedConversationId;
+                          String? matchedConversationId;
 
-                        for (var doc in existingConversation.docs) {
-                          final participants = List<String>.from(doc['participants']);
-                          if (participants.contains(user.id)) {
-                            matchedConversationId = doc.id;
-                            break;
+                          for (var doc in existingConversation.docs) {
+                            final participants = List<String>.from(doc['participants']);
+                            if (participants.contains(user.id)) {
+                              matchedConversationId = doc.id;
+                              break;
+                            }
                           }
-                        }
 
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ChatPage(
-                              conversationId: matchedConversationId, // may be null
-                              otherUserId: user.id,
+                          // Optional: create conversation if not found
+                          if (matchedConversationId == null) {
+                            final newConversation = await FirebaseFirestore.instance.collection('conversations').add({
+                              'participants': [widget.currentUserId, user.id],
+                              'lastMessage': '',
+                              'lastMessageTimestamp': FieldValue.serverTimestamp(),
+                            });
+                            matchedConversationId = newConversation.id;
+                          }
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ChatPage(
+                                conversationId: matchedConversationId!,
+                                otherUserId: user.id,
+                              ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        }
                     );
                   },
                 );

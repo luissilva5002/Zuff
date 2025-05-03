@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:zuff/pages/profile/profile.dart';
+
 import '../../home.dart';
 
 class AddPetPage extends StatefulWidget {
@@ -51,12 +52,11 @@ class _AddPetPageState extends State<AddPetPage> {
       });
     }
   }
+
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     final birthDate = DateFormat('yyyy-MM-dd').parse(_birthDateController.text);
     final currentDate = DateTime.now();
@@ -93,189 +93,160 @@ class _AddPetPageState extends State<AddPetPage> {
         const SnackBar(content: Text('Pet added successfully!')),
       );
 
-      // Navigate to Home
-      if (FirebaseAuth.instance.currentUser != null) {
-        // If the user is authenticated, go to Home page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const Home()),
-        );
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const Home(selectedIndex: 3)),
+            (Route<dynamic> route) => false,
+      );
 
-        // Navigate to Profile after going to Home
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const Profile()),
-        );
-
-        // Clear the stack and go to Profile, this will remove Home from the stack
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const Profile()),
-              (Route<dynamic> route) => false, // Removes all the previous routes
-        );
-      } else {
-        // If the user is not authenticated, go to Profile page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const Profile()),
-        );
-      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
+  }
+
+  InputDecoration getInputDecoration(String label, [IconData? icon]) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: icon != null ? Icon(icon, color: Theme.of(context).colorScheme.secondary) : null,
+      filled: true,
+      fillColor: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    );
+  }
+
+  Widget buildCheckboxRow({
+    required String label,
+    required bool value,
+    required ValueChanged<bool?> onChanged,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.secondary,
+              shape: BoxShape.circle,
+            ),
+            padding: const EdgeInsets.all(6),
+            child: const Icon(Icons.check, color: Colors.white, size: 16),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 16))),
+          Checkbox(value: value, onChanged: onChanged),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Pet'),
-      ),
+      appBar: AppBar(title: const Text('Add Pet')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
-            child: Center(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  GestureDetector(
-                    onTap: _pickImage,
-                    child: ClipOval(
-                      child: Container(
-                        height: 120,
-                        width: 120,
-                        color: Colors.grey[300],
-                        child: _imageFile == null
-                            ? const Icon(Icons.add_a_photo, size: 40, color: Colors.black54)
-                            : Image.file(_imageFile!, fit: BoxFit.cover),
-                      ),
+            child: Column(
+              children: [
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: ClipOval(
+                    child: Container(
+                      height: 120,
+                      width: 120,
+                      color: Theme.of(context).colorScheme.secondary,
+                      child: _imageFile == null
+                          ? const Icon(Icons.add_a_photo, size: 40)
+                          : Image.file(_imageFile!, fit: BoxFit.cover),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Pet Name'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the pet\'s name';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    decoration: const InputDecoration(labelText: 'Age'),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the pet\'s age';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _speciesController,
-                    decoration: const InputDecoration(labelText: 'Species'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the pet\'s species';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _breedController,
-                    decoration: const InputDecoration(labelText: 'Breed'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the pet\'s breed';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _districtController,
-                    decoration: const InputDecoration(labelText: 'District'),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedDistrict = value;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a district';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Checkbox(
-                        value: _isVaccinated,
-                        onChanged: (value) {
-                          setState(() {
-                            _isVaccinated = value!;
-                          });
-                        },
-                      ),
-                      const Text('Vaccinated'),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Checkbox(
-                        value: _isForAdoption,
-                        onChanged: (value) {
-                          setState(() {
-                            _isForAdoption = value!;
-                          });
-                        },
-                      ),
-                      const Text('For Adoption'),
-                    ],
-                  ),
+                ),
+                const SizedBox(height: 20),
 
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _birthDateController,
-                    readOnly: true,
-                    decoration: const InputDecoration(labelText: 'Birth Date'),
-                    onTap: _pickBirthDate,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select a birth date';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _submitForm,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 15.0),
-                        textStyle: const TextStyle(fontSize: 16),
-                      ),
-                      child: const Text('Add Pet'),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: getInputDecoration('Pet Name', Icons.pets),
+                  validator: (value) => value!.isEmpty ? 'Enter name' : null,
+                ),
+                const SizedBox(height: 12),
+
+                TextFormField(
+                  decoration: getInputDecoration('Age', Icons.cake),
+                  keyboardType: TextInputType.number,
+                  validator: (value) => value!.isEmpty ? 'Enter age' : null,
+                ),
+                const SizedBox(height: 12),
+
+                TextFormField(
+                  controller: _speciesController,
+                  decoration: getInputDecoration('Species', Icons.category),
+                  validator: (value) => value!.isEmpty ? 'Enter species' : null,
+                ),
+                const SizedBox(height: 12),
+
+                TextFormField(
+                  controller: _breedController,
+                  decoration: getInputDecoration('Breed', Icons.pets_outlined),
+                  validator: (value) => value!.isEmpty ? 'Enter breed' : null,
+                ),
+                const SizedBox(height: 12),
+
+                TextFormField(
+                  controller: _districtController,
+                  decoration: getInputDecoration('District', Icons.location_city),
+                  onChanged: (value) => setState(() => _selectedDistrict = value),
+                  validator: (value) => value!.isEmpty ? 'Enter district' : null,
+                ),
+                const SizedBox(height: 12),
+
+                buildCheckboxRow(
+                  label: 'Vaccinated',
+                  value: _isVaccinated,
+                  onChanged: (value) => setState(() => _isVaccinated = value!),
+                ),
+                buildCheckboxRow(
+                  label: 'For Adoption',
+                  value: _isForAdoption,
+                  onChanged: (value) => setState(() => _isForAdoption = value!),
+                ),
+                const SizedBox(height: 12),
+
+                TextFormField(
+                  controller: _birthDateController,
+                  readOnly: true,
+                  decoration: getInputDecoration('Birth Date', Icons.date_range),
+                  onTap: _pickBirthDate,
+                  validator: (value) => value!.isEmpty ? 'Select birth date' : null,
+                ),
+                const SizedBox(height: 20),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _submitForm,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      textStyle: const TextStyle(fontSize: 16),
                     ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text('Add Pet'),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
