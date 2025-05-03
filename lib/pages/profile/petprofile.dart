@@ -101,7 +101,7 @@ class PetProfilePage extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            '$name, $age' + ' years old',
+                            '$name, $age' + "years old",
                             style: const TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
