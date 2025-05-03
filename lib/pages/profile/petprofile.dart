@@ -24,11 +24,23 @@ class PetProfilePage extends StatelessWidget {
     }
   }
 
+  Future<String> _getOwnerName(String ownerId) async {
+    try {
+      DocumentSnapshot doc = await FirebaseFirestore.instance.collection('users').doc(ownerId).get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        return data['display_name'] ?? 'Unknown';
+      }
+      return 'Unknown';
+    } catch (e) {
+      return 'Unknown';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      backgroundColor: Colors.white,
       body: FutureBuilder<Map<String, dynamic>>(
         future: _getPetData(),
         builder: (context, snapshot) {
@@ -47,7 +59,7 @@ class PetProfilePage extends StatelessWidget {
           final String gender = petData['gender'] ?? 'Unknown';
           final bool vaccinated = petData['Vaccinated'] ?? false;
           final String birthDate = petData['BirthDate'] ?? 'Unknown';
-          final String owner = petData['Owner'] ?? 'Unknown';
+          final String ownerId = petData['Owner'] ?? 'Unknown';
           final String imagePath = petData['Image'] ?? '';
 
           return SingleChildScrollView(
@@ -63,10 +75,9 @@ class PetProfilePage extends StatelessWidget {
                         child: Center(child: CircularProgressIndicator()),
                       );
                     } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                      return Container(
+                      return const SizedBox(
                         height: 400,
-                        color: Colors.grey,
-                        child: const Icon(Icons.broken_image, size: 100, color: Colors.white),
+                        child: Icon(Icons.broken_image, size: 100),
                       );
                     }
 
@@ -98,42 +109,47 @@ class PetProfilePage extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.pets, size: 16, color: Colors.grey),
+                          const Icon(Icons.pets, size: 16),
                           const SizedBox(width: 6),
-                          Text('$species • $breed',
-                              style: TextStyle(color: Colors.grey[800])),
+                          Text('$species • $breed'),
                         ],
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.error, size: 16, color: Colors.grey),
+                          const Icon(Icons.error, size: 16),
                           const SizedBox(width: 6),
-                          Text('$gender',
-                              style: TextStyle(color: Colors.grey[800])),
+                          Text(gender),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                          const Icon(Icons.location_on, size: 16),
                           const SizedBox(width: 6),
-                          Text(location, style: TextStyle(color: Colors.grey[800])),
+                          Text(location),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.check_circle, size: 16, color: Colors.grey),
+                          const Icon(Icons.check_circle, size: 16),
                           const SizedBox(width: 6),
-                          Text(vaccinated ? "Vaccinated" : "Not vaccinated",
-                              style: TextStyle(color: Colors.grey[800])),
+                          Text(vaccinated ? "Vaccinated" : "Not vaccinated"),
                         ],
                       ),
                       const SizedBox(height: 16),
-                      Text(
-                        'Born on: $birthDate\nOwner: $owner',
-                        style: const TextStyle(fontSize: 16),
+                      FutureBuilder<String>(
+                        future: _getOwnerName(ownerId),
+                        builder: (context, ownerSnapshot) {
+                          final ownerName = (ownerSnapshot.connectionState == ConnectionState.done && ownerSnapshot.hasData)
+                              ? ownerSnapshot.data!
+                              : 'Loading...';
+                          return Text(
+                            'Born on: $birthDate\nOwner: $ownerName',
+                            style: const TextStyle(fontSize: 16),
+                          );
+                        },
                       ),
                     ],
                   ),

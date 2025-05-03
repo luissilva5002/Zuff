@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'profileDisplay.dart';
+
 class ChatPage extends StatefulWidget {
   final String conversationId;
   final String otherUserId;
@@ -86,7 +88,24 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('$otherUserName')),
+      appBar: AppBar(
+              title: Text(otherUserName),
+              centerTitle: true,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.account_circle),
+                  tooltip: 'View Owner Profile',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProfileDisplay(userId: widget.otherUserId),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
       body: Column(
         children: [
           Expanded(

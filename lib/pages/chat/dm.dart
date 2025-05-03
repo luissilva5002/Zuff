@@ -20,7 +20,6 @@ class DMPage extends StatelessWidget {
       final ref = FirebaseStorage.instance.ref().child('users/$userId.jpg');
       return await ref.getDownloadURL();
     } catch (e) {
-      // If image doesn't exist or an error occurs, return null
       return null;
     }
   }
@@ -28,7 +27,7 @@ class DMPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Your Chats')),
+      appBar: AppBar(title: const Text('Your Chats')),
       body: StreamBuilder<QuerySnapshot>(
         stream: getConversations(),
         builder: (context, snapshot) {
@@ -38,50 +37,70 @@ class DMPage extends StatelessWidget {
 
           var conversations = snapshot.data!.docs;
 
-          return ListView.builder(
-            itemCount: conversations.length,
-            itemBuilder: (context, index) {
-              var conversation = conversations[index];
-              var participants = (conversation['participants'] as List<dynamic>).cast<String>();
-              var otherUserId = participants.firstWhere((id) => id != currentUserId);
+          // Prepare futures for all users and images
+          List<Future<Map<String, dynamic>>> futureUserData = conversations
+              .map((conversation) async {
+            var participants = (conversation['participants'] as List<dynamic>)
+                .cast<String>();
+            var otherUserId = participants.firstWhere((id) =>
+            id != currentUserId);
 
-              return FutureBuilder<DocumentSnapshot>(
-                future: FirebaseFirestore.instance.collection('users').doc(otherUserId).get(),
-                builder: (context, userSnapshot) {
-                  if (!userSnapshot.hasData) {
-                    return ListTile(title: Text('Loading...'));
-                  }
+            var userDoc = await FirebaseFirestore.instance.collection('users')
+                .doc(otherUserId)
+                .get();
+            var userData = userDoc.data() ?? {};
 
-                  var userData = userSnapshot.data!.data() as Map<String, dynamic>?;
-                  String otherUserName = userData?['display_name'] ?? 'Unknown';
+            String name = userData['display_name'] ?? 'Unknown';
+            String? imageUrl = await getProfileImageUrl(otherUserId);
 
-                  return FutureBuilder<String?>(
-                    future: getProfileImageUrl(otherUserId),
-                    builder: (context, imageSnapshot) {
-                      final imageProvider = (imageSnapshot.connectionState == ConnectionState.done &&
-                          imageSnapshot.hasData &&
-                          imageSnapshot.data != null)
-                          ? NetworkImage(imageSnapshot.data!)
-                          : const AssetImage('assets/images/default_profile.png') as ImageProvider;
+            return {
+              'conversation': conversation,
+              'otherUserId': otherUserId,
+              'displayName': name,
+              'imageUrl': imageUrl,
+            };
+          }).toList();
 
-                      return ListTile(
-                        leading: CircleAvatar(
-                          radius: 24,
-                          backgroundImage: imageProvider,
-                        ),
-                        title: Text(otherUserName),
-                        subtitle: Text(conversation['lastMessage'] ?? ''),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ChatPage(
+          return FutureBuilder<List<Map<String, dynamic>>>(
+            future: Future.wait(futureUserData),
+            builder: (context, usersSnapshot) {
+              if (!usersSnapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              var items = usersSnapshot.data!;
+
+              return ListView.builder(
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  var item = items[index];
+                  var conversation = item['conversation'];
+                  var displayName = item['displayName'];
+                  var imageUrl = item['imageUrl'];
+                  var otherUserId = item['otherUserId'];
+
+                  final imageProvider = (imageUrl != null)
+                      ? NetworkImage(imageUrl)
+                      : const AssetImage(
+                      'assets/images/default_profile.png') as ImageProvider;
+
+                  return ListTile(
+                    leading: CircleAvatar(
+                      radius: 24,
+                      backgroundImage: imageProvider,
+                    ),
+                    title: Text(displayName),
+                    subtitle: Text(conversation['lastMessage'] ?? ''),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ChatPage(
                                 conversationId: conversation.id,
                                 otherUserId: otherUserId,
                               ),
-                            ),
-                          );
-                        },
+                        ),
                       );
                     },
                   );
