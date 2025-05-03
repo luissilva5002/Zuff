@@ -45,6 +45,7 @@ class _SignUpPageState extends State<SignUpPage> {
             .set({
           'email': emailController.text.trim(),
           'created_time': date,
+          'bio': 'No Bio...',
           'display_name': nameController.text.trim(),
           'accepted': accepted, // Store accepted array in Firestore
           'rejected': rejected, // Store rejected array in Firestore
