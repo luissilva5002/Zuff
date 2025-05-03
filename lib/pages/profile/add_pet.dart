@@ -182,14 +182,6 @@ class _AddPetPageState extends State<AddPetPage> {
                   validator: (value) => value!.isEmpty ? 'Enter name' : null,
                 ),
                 const SizedBox(height: 12),
-
-                TextFormField(
-                  decoration: getInputDecoration('Age', Icons.cake),
-                  keyboardType: TextInputType.number,
-                  validator: (value) => value!.isEmpty ? 'Enter age' : null,
-                ),
-                const SizedBox(height: 12),
-
                 TextFormField(
                   controller: _speciesController,
                   decoration: getInputDecoration('Species', Icons.category),

@@ -55,7 +55,7 @@ class PetProfilePage extends StatelessWidget {
           final String name = petData['Name'] ?? 'Unknown';
           final String species = petData['Species'] ?? 'Unknown';
           final String breed = petData['Breed'] ?? 'Unknown';
-          final String location = petData['Location'] ?? 'Unknown';
+          final String location = petData['District'] ?? 'Unknown';
           final bool vaccinated = petData['Vaccinated'] ?? false;
           final String birthDate = petData['BirthDate'] ?? 'Unknown';
           final String ownerId = petData['Owner'] ?? 'Unknown';
@@ -101,7 +101,7 @@ class PetProfilePage extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            '$name, $age' + 'years old',
+                            '$name, $age' + ' years old',
                             style: const TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
