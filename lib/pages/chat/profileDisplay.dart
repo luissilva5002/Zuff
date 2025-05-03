@@ -244,12 +244,6 @@ class _ProfileDisplayState extends State<ProfileDisplay> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text('Email: $email\nJoined: $creationDate',
-                  style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
-            ),
           ],
         ),
       ),
