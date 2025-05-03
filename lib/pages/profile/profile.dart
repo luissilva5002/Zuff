@@ -195,7 +195,7 @@ class _ProfileWidgetState extends State<Profile> {
           radius: 50,
           backgroundImage: user?.photoURL != null
               ? NetworkImage(user!.photoURL!)
-              : const AssetImage('assets/default_profile.png') as ImageProvider,
+              : const AssetImage('assets/images/default_profile.png') as ImageProvider,
         ),
         Positioned(
           bottom: 0,
@@ -220,7 +220,7 @@ class _ProfileWidgetState extends State<Profile> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor:  Theme.of(context).colorScheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         title: const Text("Profile"),
         actions: [

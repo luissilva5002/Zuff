@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zuff/auth/signup.dart';
 
+import '../home.dart';
 import '../main.dart';
 import '../utils.dart';
 import 'forgotpassword.dart';
@@ -41,7 +42,9 @@ class _LoginPageState extends State<LoginPage> {
     } on FirebaseAuthException catch (e) {
       Utils.showSnackBar(e.message);
     }
-    navigatorKey.currentState!.popUntil((route) => route.isFirst);
+    Navigator.of(context, rootNavigator: true).pushReplacement(
+      MaterialPageRoute(builder: (context) => const Home()), // Replace with your home screen
+    );
     return null;
   }
 
