@@ -45,43 +45,6 @@ class _LoginPageState extends State<LoginPage> {
     return null;
   }
 
-  Future<User?> signInWithGoogle() async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
-
-    try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) {
-        // User canceled the sign-in
-        Navigator.of(context).pop();
-        return null;
-      }
-
-      final GoogleSignInAuthentication googleAuth = await googleUser
-          .authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithCredential(credential);
-      Navigator.of(context).pop();
-      return userCredential.user;
-    } on FirebaseAuthException catch (e) {
-      Navigator.of(context).pop();
-      return null;
-    } catch (e) {
-      Navigator.of(context).pop();
-
-      return null;
-    }
-  }
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -202,58 +165,7 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                             ),
-                            SizedBox(height: 20),
-                            const Text("Or sign up with"),
-                            SizedBox(height: 20),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: signInWithGoogle,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    side: BorderSide(color: Colors.grey, width: 1.5),
-                                  ),
-                                ),
-                                child: const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.g_mobiledata_rounded, color: Colors.black, size: 35),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'Continue with Google',
-                                      style: TextStyle(color: Colors.black),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () {},
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    side: BorderSide(color: Colors.grey, width: 1.5),
-                                  ),
-                                ),
-                                child: const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.apple, color: Colors.black, size: 30),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'Continue with Apple',
-                                      style: TextStyle(color: Colors.black),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
+
                             const SizedBox(height: 15),
                             RichText(
                               text: TextSpan(

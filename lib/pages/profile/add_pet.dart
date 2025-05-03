@@ -5,7 +5,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:zuff/pages/profile/profile.dart';
 import '../../home.dart';
 import 'package:zuff/services/age.dart';
 
@@ -71,7 +70,7 @@ class _AddPetPageState extends State<AddPetPage> {
         imagePath = 'pets/$fileName';
       }
 
-      await FirebaseFirestore.instance.collection('pets').add({
+      final petRef = await FirebaseFirestore.instance.collection('pets').add({
         'Adoption': _isForAdoption,
         'Name': _nameController.text,
         'Species': _speciesController.text,
@@ -83,6 +82,13 @@ class _AddPetPageState extends State<AddPetPage> {
         'Owner': userId,
         'Age': age,
       });
+
+      if (_isForAdoption) {
+        await FirebaseFirestore.instance.collection('users').doc(userId).update({
+          'accepted': FieldValue.arrayUnion([petRef.id]),
+        });
+      }
+
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pet added successfully!')),
