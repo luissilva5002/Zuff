@@ -38,15 +38,6 @@ class MenuPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            _buildMenuCard(
-              context,
-              icon: Icons.notifications_outlined,
-              title: "Notifications",
-              onTap: () {
-                // Navigate to notifications page
-              },
-            ),
-            const SizedBox(height: 12),
             _buildThemeCard(context),
             const SizedBox(height: 12),
             _buildMenuCard(
