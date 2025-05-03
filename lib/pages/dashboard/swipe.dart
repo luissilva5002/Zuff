@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:zuff/services/age.dart';
 
 import '../../home.dart';
-
 class Pet {
   final String id;
   final String name;
@@ -16,7 +15,8 @@ class Pet {
   final String? breed;
   final bool? vaccinated;
   final String? birthDate;
-  final String? owner;
+  final String? ownerName;
+  final String? ownerId; // Add this
 
   Pet({
     required this.name,
@@ -27,7 +27,8 @@ class Pet {
     required this.breed,
     required this.vaccinated,
     required this.birthDate,
-    required this.owner,
+    required this.ownerName,
+    required this.ownerId, // Include here
     required this.id,
   });
 }
@@ -43,6 +44,7 @@ class _PetSwipeState extends State<PetSwipe> {
   List<Pet> _pets = []; // List to store fetched pets
   bool _showBack = false;
   final ageService = Age();
+  String OwnerID = '';
 
   @override
   void initState() {
@@ -51,90 +53,83 @@ class _PetSwipeState extends State<PetSwipe> {
   }
 
   Future<void> fetchPets() async {
-    try {
-      String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUserId)
-          .get();
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUserId)
+        .get();
 
-      List<dynamic> accepted = userDoc['accepted'] ?? [];
-      List<dynamic> rejected = userDoc['rejected'] ?? [];
+    List<dynamic> accepted = userDoc['accepted'] ?? [];
+    List<dynamic> rejected = userDoc['rejected'] ?? [];
 
-      Set<String> excludedPetIds = {
-        ...accepted.map((e) => e.toString()),
-        ...rejected.map((e) => e.toString())
-      };
+    Set<String> excludedPetIds = {
+      ...accepted.map((e) => e.toString()),
+      ...rejected.map((e) => e.toString())
+    };
 
-      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-          .collection('pets')
-          .where('Adoption', isEqualTo: true)
-          .get();
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection('pets')
+        .where('Adoption', isEqualTo: true)
+        .get();
 
-      List<Pet> filteredPets = [];
+    List<Pet> filteredPets = [];
 
-      for (var doc in querySnapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
+    for (var doc in querySnapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
 
-        // Only process pets that are not in accepted or rejected lists
-        if (excludedPetIds.contains(doc.id)) {
-          continue;
-        }
-
-        final birthDateStr = data['BirthDate'] ?? '';
-        final int age = ageService.calculateAge(birthDateStr);
-
-        // Fetch the owner's name based on the 'owner' field (owner is an ID)
-        String ownerName = 'Unknown';
-        if (data['Owner'] != null) {
-          String ownerId = data['Owner'];
-
-          try {
-            DocumentSnapshot ownerDoc = await FirebaseFirestore.instance
-                .collection('users')
-                .doc(ownerId)
-                .get();
-
-            if (ownerDoc.exists && ownerDoc.data() != null) {
-              ownerName = ownerDoc['display_name'] ?? 'Unknown';
-            } else {
-              print('Owner document does not exist or has no data for ownerId: $ownerId');
-            }
-          } catch (e) {
-            print('Error fetching owner name: $e');
-          }
-        } else {
-          print('No owner ID found for pet: ${doc.id}');
-        }
-
-        filteredPets.add(Pet(
-          id: doc.id,
-          name: data['Name'] ?? 'Unknown',
-          location: data['District'] ?? 'Unknown', // Changed from Location to District
-          imagePath: data['Image'] ?? '',
-          species: data['Species'],
-          breed: data['Breed'],
-          owner: ownerName,  // Now passing the owner's name fetched from users collection
-          vaccinated: data['Vaccinated'],
-          birthDate: birthDateStr,
-          age: age,
-        ));
+      if (excludedPetIds.contains(doc.id)) {
+        continue;
       }
 
-      setState(() {
-        _pets = filteredPets;
-      });
-    } catch (e) {
-      print('Error fetching pets: $e');
+      final birthDateStr = data['BirthDate'] ?? '';
+      final int age = ageService.calculateAge(birthDateStr);
+
+      String ownerName = 'Unknown';
+      String? ownerId = data['Owner'];
+
+      if (ownerId != null) {
+        try {
+          DocumentSnapshot ownerDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(ownerId)
+              .get();
+
+          if (ownerDoc.exists && ownerDoc.data() != null) {
+            ownerName = ownerDoc['display_name'] ?? 'Unknown';
+          }
+        } catch (e) {
+          print('Error fetching owner name: $e');
+        }
+      } else {
+        print('No owner ID found for pet: ${doc.id}');
+      }
+
+      filteredPets.add(Pet(
+        id: doc.id,
+        name: data['Name'] ?? 'Unknown',
+        location: data['District'] ?? 'Unknown',
+        imagePath: data['Image'] ?? '',
+        species: data['Species'],
+        breed: data['Breed'],
+        ownerName: ownerName,
+        ownerId: ownerId,
+        vaccinated: data['Vaccinated'],
+        birthDate: birthDateStr,
+        age: age,
+      ));
     }
+
+    setState(() {
+      _pets = filteredPets;
+    });
   }
 
   Future<void> accept(Pet pet) async {
     print("Accepted ${pet.name}");
 
     String currentUserId = FirebaseAuth.instance.currentUser!.uid;
-    String? shelterUserId = pet.owner;
+    String? shelterUserId = pet.ownerId;
 
     // Add pet document ID to "accepted"
     await FirebaseFirestore.instance.collection('users').doc(currentUserId).update({
@@ -437,7 +432,7 @@ class _PetSwipeState extends State<PetSwipe> {
               _infoRow(Icons.pets_outlined, 'Breed', pet.breed ?? 'Unknown'),
               _infoRow(Icons.health_and_safety, 'Vaccinated', pet.vaccinated == true ? 'Yes' : 'No'),
               _infoRow(Icons.cake, 'Birth Date', pet.birthDate ?? 'Unknown'),
-              _infoRow(Icons.person, 'Owner', pet.owner ?? 'Unknown'),
+              _infoRow(Icons.person, 'Owner', pet.ownerName ?? 'Unknown'),
             ],
           ),
         ),

@@ -58,9 +58,6 @@ class _AddPetPageState extends State<AddPetPage> {
       _isLoading = true;
     });
 
-    final ageService = Age();
-    int age = ageService.calculateAge(_birthDateController.text);
-
     try {
       String? imagePath;
       if (_imageFile != null) {
@@ -80,7 +77,6 @@ class _AddPetPageState extends State<AddPetPage> {
         'BirthDate': _birthDateController.text,
         'Image': imagePath ?? '',
         'Owner': userId,
-        'Age': age,
       });
 
       if (_isForAdoption) {
@@ -180,13 +176,6 @@ class _AddPetPageState extends State<AddPetPage> {
                   controller: _nameController,
                   decoration: getInputDecoration('Pet Name', Icons.pets),
                   validator: (value) => value!.isEmpty ? 'Enter name' : null,
-                ),
-                const SizedBox(height: 12),
-
-                TextFormField(
-                  decoration: getInputDecoration('Age', Icons.cake),
-                  keyboardType: TextInputType.number,
-                  validator: (value) => value!.isEmpty ? 'Enter age' : null,
                 ),
                 const SizedBox(height: 12),
 
