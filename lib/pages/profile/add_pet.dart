@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:zuff/pages/profile/profile.dart';
 import '../../home.dart';
+import 'package:zuff/services/age.dart';
 
 class AddPetPage extends StatefulWidget {
   const AddPetPage({super.key});
@@ -57,15 +58,9 @@ class _AddPetPageState extends State<AddPetPage> {
     setState(() {
       _isLoading = true;
     });
-
-    final birthDate = DateFormat('yyyy-MM-dd').parse(_birthDateController.text);
-    final currentDate = DateTime.now();
-
-    int age = currentDate.year - birthDate.year;
-    if (currentDate.month < birthDate.month ||
-        (currentDate.month == birthDate.month && currentDate.day < birthDate.day)) {
-      age--;
-    }
+    
+    final ageService = Age();
+    int age = ageService.calculateAge(_birthDateController.text);
 
     try {
       String? imagePath;
