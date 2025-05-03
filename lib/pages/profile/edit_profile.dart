@@ -63,33 +63,11 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
       // Update FirebaseAuth display name
       await user.updateDisplayName(name);
 
-      // Navigate to Home
-      if (FirebaseAuth.instance.currentUser != null) {
-        // If the user is authenticated, go to Home page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const Home()),
-        );
-
-        // Navigate to Profile after going to Home
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const Profile()),
-        );
-
-        // Clear the stack and go to Profile, this will remove Home from the stack
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const Profile()),
-              (Route<dynamic> route) => false, // Removes all the previous routes
-        );
-      } else {
-        // If the user is not authenticated, go to Profile page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const Profile()),
-        );
-      }
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const Home(selectedIndex: 3)),
+            (Route<dynamic> route) => false,
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),

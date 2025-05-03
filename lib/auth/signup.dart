@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:zuff/auth/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:zuff/main.dart';
 import '../utils.dart';
 
@@ -26,6 +25,7 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController confirmPasswordController = TextEditingController();
   final nameController = TextEditingController();
   bool _isPasswordVisible = false;
+  bool _isPasswordVisible1 = false;
 
   Future<void> uploadInfo() async {
     List<String> accepted = [''];
@@ -243,17 +243,17 @@ class _SignUpPageState extends State<SignUpPage> {
                               contentPadding: EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                  _isPasswordVisible1 ? Icons.visibility : Icons.visibility_off,
                                   color: Colors.grey[600],
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    _isPasswordVisible = !_isPasswordVisible;
+                                    _isPasswordVisible1 = !_isPasswordVisible1;
                                   });
                                 },
                               ),
                             ),
-                            obscureText: !_isPasswordVisible,
+                            obscureText: !_isPasswordVisible1,
                             style: TextStyle(color: Colors.black),
 
                             autovalidateMode: AutovalidateMode.onUserInteraction,
